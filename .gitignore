@@ -29,3 +29,4 @@ workplace/.metadata/*
 *.o
 *.xc.o
 *.xe
+.build/
