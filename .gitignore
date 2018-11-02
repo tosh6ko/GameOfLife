@@ -25,5 +25,7 @@ hs_err_pid*
 # Ignoring .metadata
 workplace/.metadata/*
 
-# Ignoring object files
+# Ignoring build files
 *.o
+*.xc.o
+*.xe
