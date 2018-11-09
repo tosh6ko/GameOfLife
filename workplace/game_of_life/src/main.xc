@@ -49,9 +49,11 @@ void DataInStream(char infname[], chanend c_out)
     _readinline( line, IMWD );
     for( int x = 0; x < IMWD; x++ ) {
       c_out <: line[ x ];
-      printf( "%d", line[ x ] ); //show image values
+      // Printing 0-s and 255-s
+      //printf( "%d", line[ x ] ); //show image values
     }
-    printf( "\n" );
+    //
+    //printf( "\n" );
   }
 
   //Close PGM image file
@@ -67,7 +69,7 @@ void printMatrix(char matrix[IMHT][IMWD])
     {
         for(int b=0;b<IMWD;b++)
         {
-            printf("%c", (matrix[b][a]+'0'));
+            printf("%c ", (matrix[b][a]+'0'));
         }
         printf("\n");
     }
@@ -145,6 +147,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc)
       else matrix[y][x] = 0;
     }
   }
+
+  printMatrix(matrix);
   calculateNextState(matrix);
   printMatrix(matrix);
 
@@ -152,7 +156,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc)
   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
     for( int x = 0; x < IMWD; x++ ) {//go through each pixel per line
         if(matrix[y][x]) c_out <: ((uchar)(0xFF));
-        else c_out <: 0;
+        else c_out <: ((uchar)(0x00));
         //c_out <: matrix[y][x]; //send some modified pixel out
     }
   }
