@@ -25,11 +25,11 @@ hs_err_pid*
 # Ignoring .metadata
 workplace/.metadata/*
 
+# Ignoring build files
+*.o
+*.xc.o
+*.xe
+.build/
+
 # Ignoring .DS_Store
 *.DS_Store
-
-# Ignoring /.cproject
-*/.cproject/*
-
-# Ignoring /.settings
-*/.settings/*
