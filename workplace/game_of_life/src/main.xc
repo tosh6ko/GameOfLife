@@ -49,7 +49,7 @@ void DataInStream(char infname[], chanend c_out)
     _readinline( line, IMWD );
     for( int x = 0; x < IMWD; x++ ) {
       c_out <: line[ x ];
-      printf( "-%4.1d ", line[ x ] ); //show image values
+      printf( "%d", line[ x ] ); //show image values
     }
     printf( "\n" );
   }
@@ -58,6 +58,45 @@ void DataInStream(char infname[], chanend c_out)
   _closeinpgm();
   printf( "DataInStream: Done...\n" );
   return;
+}
+
+char isAlive(int neighbour, char previousState)
+{
+    return 1;
+}
+
+// Function to calculate next state
+void calculateNextState(char matrix[IMHT][IMWD])
+{
+    char previous[IMHT][IMWD];
+    for(int a = 0; a < IMHT; a++)
+    {
+        for(int b = 0; b < IMWD; b++)
+        {
+            previous[a][b]=matrix[a][b];
+        }
+    }
+
+    const int neighbourX[8] = {-1,  0, 1, -1, 1, -1,  0, 1};
+    const int neighbourY[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
+    int numberOfAlive;
+    int nX;
+    int nY;
+    for(int a = 0; a < IMHT; a++)
+    {
+        for(int b = 0; b < IMWD; b++)
+        {
+            numberOfAlive = 0;
+            for(int i=0;i<8;i++)
+            {
+                nX = (b+neighbourX[i]+IMWD)%IMWD;
+                nY = (a+neighbourY[i]+IMHT)%IMHT;
+                if(previous[nY][nX]) numberOfAlive++;
+            }
+
+            matrix[a][b] = isAlive(numberOfAlive, previous[a][b]);
+        }
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -80,9 +119,21 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc)
   //This just inverts every pixel, but you should
   //change the image according to the "Game of Life"
   printf( "Processing...\n" );
+  // Send image to worker function
+  char matrix[IMHT][IMWD];
+  printf( "Printing... \n" );
   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
     for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
       c_in :> val;                    //read the pixel value
+      if(val) matrix[y][x] = 1;
+      else matrix[y][x] = 0;
+    }
+  }
+  calculateNextState(matrix);
+
+  printf( "Printing... \n" );
+  for( int y = 0; y < IMHT; y++ ) {   //go through all lines
+    for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
       c_out <: ((uchar)( val ^ 0xFF )); //send some modified pixel out
     }
   }
