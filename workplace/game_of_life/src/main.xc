@@ -60,9 +60,25 @@ void DataInStream(char infname[], chanend c_out)
   return;
 }
 
+// Function to print our matrix to the terminal
+void printMatrix(char matrix[IMHT][IMWD])
+{
+    for(int a=0;a<IMHT;a++)
+    {
+        for(int b=0;b<IMWD;b++)
+        {
+            printf("%c", (matrix[b][a]+'0'));
+        }
+        printf("\n");
+    }
+    printf("\n");
+}
+
 char isAlive(int neighbour, char previousState)
 {
-    return 1;
+    if(neighbour == 3) return 1;
+    if(neighbour == 2 && previousState == 1) return 1;
+    return 0;
 }
 
 // Function to calculate next state
@@ -130,11 +146,14 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc)
     }
   }
   calculateNextState(matrix);
+  printMatrix(matrix);
 
   printf( "Printing... \n" );
   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
-    for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
-      c_out <: ((uchar)( val ^ 0xFF )); //send some modified pixel out
+    for( int x = 0; x < IMWD; x++ ) {//go through each pixel per line
+        if(matrix[y][x]) c_out <: ((uchar)(0xFF));
+        else c_out <: 0;
+        //c_out <: matrix[y][x]; //send some modified pixel out
     }
   }
   printf( "\nOne processing round completed...\n" );
@@ -164,7 +183,7 @@ void DataOutStream(char outfname[], chanend c_in)
       c_in :> line[ x ];
     }
     _writeoutline( line, IMWD );
-    printf( "DataOutStream: Line written...\n" );
+    printf( "DataOutStream: Line written to the file...\n" );
   }
 
   //Close the PGM image
