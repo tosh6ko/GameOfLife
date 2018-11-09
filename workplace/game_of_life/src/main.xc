@@ -58,7 +58,7 @@ void DataInStream(char infname[], chanend c_out)
 
   //Close PGM image file
   _closeinpgm();
-  printf( "DataInStream: Done...\n" );
+  // printf( "DataInStream: Done...\n" );
   return;
 }
 
@@ -149,8 +149,13 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc)
   }
 
   printMatrix(matrix);
-  calculateNextState(matrix);
-  printMatrix(matrix);
+
+  // = Number of rounds for which we want to check
+  for(int a=0;a<60;a++)
+  {
+      calculateNextState(matrix);
+      printMatrix(matrix);
+  }
 
   printf( "Printing... \n" );
   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
