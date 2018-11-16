@@ -150,21 +150,14 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer)
 
   printMatrix(matrix);
 
-  printf("My little deadlock checker 0\n");
-
   c_timer <: 1;
 
-  printf("My little deadlock checker 1\n");
-
   // = Number of rounds for which we want to check
-  for(int a=0;a<5;a++)
+  for(int a=0;a<100000;a++)
   {
       calculateNextState(matrix);
       //printMatrix(matrix);
   }
-
-
-  printf("My little deadlock checker 2\n");
 
   c_timer <: 2;
 
@@ -193,21 +186,19 @@ void timer_thread(chanend c_timer)
 
 
     const unsigned int period = 100000000; // period of 1s
+    const unsigned long long int uint_Max = 4294967295LL;
 
     while (1)
     {
         select
         {
-            case t when timerafter ( helper ) :> helper :
+            case t when timerafter ( uint_Max ) :> void :
                 if(timerRunning)
                 {
-                    helper--;
                     numberOfCycles++;
                 }
                 break;
             case c_timer :> from_controller:
-
-                printf("My little deadlock checker 2\n");
                 if(from_controller == 1)
                 {
                     t :> start_time;
@@ -219,10 +210,14 @@ void timer_thread(chanend c_timer)
                 {
                     t :> end_time;
                     // Every Cycle is MAX_UNSIGNED_INT - 1, because every cycle is with one lower than MAX_UNSIGNED_INT
-                    resultingTime = (4294967295LL);
+                    resultingTime = (uint_Max);
                     resultingTime*= numberOfCycles;
                     resultingTime+=end_time-start_time;
-                    printf("Time passed: %llu", resultingTime);
+                    printf("\n\n");
+                    printf("Number of cycles     : %u\n", numberOfCycles);
+                    printf("Time passed (pure)   : %llu\n", resultingTime);
+                    printf("Time passed (seconds): %f\n", ((double)resultingTime/period));
+                    printf("\n\n");
                     timerRunning = 0;
                 }
                 break;
