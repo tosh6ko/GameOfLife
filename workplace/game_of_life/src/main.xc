@@ -124,7 +124,7 @@ void calculateNextState(char matrix[IMHT][IMWD])
 // Currently the function just inverts the image
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void distributor(chanend c_in, chanend c_out, chanend fromAcc)
+void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer)
 {
   uchar val;
 
@@ -150,14 +150,25 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc)
 
   printMatrix(matrix);
 
+  printf("My little deadlock checker 0\n");
+
+  c_timer <: 1;
+
+  printf("My little deadlock checker 1\n");
+
   // = Number of rounds for which we want to check
-  for(int a=0;a<60;a++)
+  for(int a=0;a<5;a++)
   {
       calculateNextState(matrix);
-      printMatrix(matrix);
+      //printMatrix(matrix);
   }
 
-  printf( "Printing... \n" );
+
+  printf("My little deadlock checker 2\n");
+
+  c_timer <: 2;
+
+  printf( "Saving to file... \n" );
   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
     for( int x = 0; x < IMWD; x++ ) {//go through each pixel per line
         if(matrix[y][x]) c_out <: ((uchar)(0xFF));
@@ -166,6 +177,57 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc)
     }
   }
   printf( "\nOne processing round completed...\n" );
+}
+
+void timer_thread(chanend c_timer)
+{
+    timer t;
+    char timerRunning;
+    unsigned int numberOfCycles;
+    unsigned int start_time;
+    unsigned int end_time;
+    unsigned int helper;
+    unsigned long long int resultingTime;
+
+    int from_controller;
+
+
+    const unsigned int period = 100000000; // period of 1s
+
+    while (1)
+    {
+        select
+        {
+            case t when timerafter ( helper ) :> helper :
+                if(timerRunning)
+                {
+                    helper--;
+                    numberOfCycles++;
+                }
+                break;
+            case c_timer :> from_controller:
+
+                printf("My little deadlock checker 2\n");
+                if(from_controller == 1)
+                {
+                    t :> start_time;
+                    timerRunning = 1;
+                    numberOfCycles = 0;
+                    helper = start_time-1;
+                }
+                else if(from_controller == 2)
+                {
+                    t :> end_time;
+                    // Every Cycle is MAX_UNSIGNED_INT - 1, because every cycle is with one lower than MAX_UNSIGNED_INT
+                    resultingTime = (4294967295LL);
+                    resultingTime*= numberOfCycles;
+                    resultingTime+=end_time-start_time;
+                    printf("Time passed: %llu", resultingTime);
+                    timerRunning = 0;
+                }
+                break;
+        }
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -256,13 +318,15 @@ i2c_master_if i2c[1];               //interface to orientation
 char infname[] = "test.pgm";     //put your input image path here
 char outfname[] = "testout.pgm"; //put your output image path here
 chan c_inIO, c_outIO, c_control;    //extend your channel definitions here
+chan c_timer;
 
 par {
     i2c_master(i2c, 1, p_scl, p_sda, 10);   //server thread providing orientation data
     orientation(i2c[0],c_control);        //client thread reading orientation data
     DataInStream(infname, c_inIO);          //thread to read in a PGM image
     DataOutStream(outfname, c_outIO);       //thread to write out a PGM image
-    distributor(c_inIO, c_outIO, c_control);//thread to coordinate work on image
+    distributor(c_inIO, c_outIO, c_control, c_timer);//thread to coordinate work on image
+    timer_thread(c_timer);
   }
 
   return 0;
