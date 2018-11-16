@@ -1,0 +1,11 @@
+1. Make a timer thread
+1. One worker on separate thread
+1. Check the speed and do speed tests
+1. Add button functionality
+1. Split the char in 8 cells
+1. Make a swarm of one master thread and one worker
+1. Time test extensively
+1. Make the swarm bigger
+1. Test intensively
+1. Go on two tiles
+1. Test extensively
