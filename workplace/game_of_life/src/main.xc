@@ -27,6 +27,9 @@ port p_sda = XS1_PORT_1F;
 #define FXOS8700EQ_OUT_Z_MSB 0x5
 #define FXOS8700EQ_OUT_Z_LSB 0x6
 
+in port buttons = XS1_PORT_4E; //port to access xCore-200 buttons
+out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
+
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 // Read Image from PGM file from path infname[] to channel c_out
@@ -125,14 +128,20 @@ void calculateNextState(char matrix[IMHT][IMWD])
 // Currently the function just inverts the image
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer)
+void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, chanend buttons_to_distributor)
 {
   uchar val;
+  int button_input;
 
   //Starting up and wait for tilting of the xCore-200 Explorer
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
-  printf( "Waiting for Board Tilt...\n" );
-  fromAcc :> int value;
+  printf( "Waiting for press of SW1 button...\n" );
+
+  while(1)
+  {
+      buttons_to_distributor :> button_input;
+      if(button_input == 14) break;
+  }
 
   //Read in and do something with your image values..
   //This just inverts every pixel, but you should
@@ -143,7 +152,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer)
   printf( "Printing... \n" );
   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
     for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
-      c_in :> val;                    //read the pixel value
+      c_in :> val;
+      //read the pixel value
       if(val) matrix[y][x] = 1;
       else matrix[y][x] = 0;
     }
@@ -174,6 +184,23 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer)
   printf( "\nOne processing round completed...\n" );
 }
 
+//READ BUTTONS and send button pattern to userAnt
+void buttonListener(in port b, chanend buttons_to_distributor) {
+  int r;
+  int running = 1;
+  while (running) {
+    b when pinseq(15)  :> r;    // check that no button is pressed
+    b when pinsneq(15) :> r;    // check if some buttons are pressed
+    if ((r==13) || (r==14))     // if either button is pressed
+    {
+        buttons_to_distributor <: r;             // send button pattern to userAnt
+    }
+  }
+  return;
+}
+
+// Main timer thread, communicating with the
+// client and running concurrently with the helper thread
 void main_timer_thread(chanend c_helper_timer, chanend c_timer)
 {
     unsigned int start_time;
@@ -363,14 +390,16 @@ char infname[] = "test.pgm";     //put your input image path here
 char outfname[] = "testout.pgm"; //put your output image path here
 chan c_inIO, c_outIO, c_control;    //extend your channel definitions here
 chan c_timer;
+chan buttons_to_distributor;
 
 par {
     i2c_master(i2c, 1, p_scl, p_sda, 10);   //server thread providing orientation data
     orientation(i2c[0],c_control);        //client thread reading orientation data
     DataInStream(infname, c_inIO);          //thread to read in a PGM image
     DataOutStream(outfname, c_outIO);       //thread to write out a PGM image
-    distributor(c_inIO, c_outIO, c_control, c_timer);//thread to coordinate work on image
+    distributor(c_inIO, c_outIO, c_control, c_timer, buttons_to_distributor);//thread to coordinate work on image
     timer_thread(c_timer);
+    buttonListener(buttons, buttons_to_distributor);
   }
 
   return 0;
