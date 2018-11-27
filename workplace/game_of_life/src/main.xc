@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "pgmIO.h"
 #include "i2c.h"
+#include <timer.h>
 
 #define  IMHT 16                  //image height
 #define  IMWD 16                  //image width
@@ -153,10 +154,11 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer)
   c_timer <: 1;
 
   // = Number of rounds for which we want to check
-  for(int a=0;a<100000;a++)
+  for(int a=0;a<30000;a++)
   {
       calculateNextState(matrix);
       //printMatrix(matrix);
+      if(a%1000 == 0) printf("Current roud is %d.\n", a);
   }
 
   c_timer <: 2;
@@ -172,17 +174,23 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer)
   printf( "\nOne processing round completed...\n" );
 }
 
-void timer_thread(chanend c_timer)
+void main_timer_thread(chanend c_helper_timer, chanend c_timer)
 {
-    timer t;
-    char timerRunning;
-    unsigned int numberOfCycles;
     unsigned int start_time;
     unsigned int end_time;
-    unsigned int helper;
+    unsigned int nullifier;
+
+    // We initialize a timer and find the constant
+    // which added to it would nullify it
+    timer t;
+    t :> start_time;
+    nullifier = -start_time;
+    start_time += nullifier;
+    unsigned int numberOfCycles;
     unsigned long long int resultingTime;
 
     int from_controller;
+    int from_helper_timer_thread;
 
 
     const unsigned int period = 100000000; // period of 1s
@@ -192,24 +200,28 @@ void timer_thread(chanend c_timer)
     {
         select
         {
-            case t when timerafter ( uint_Max ) :> void :
-                if(timerRunning)
-                {
-                    numberOfCycles++;
-                }
+            case c_helper_timer :> from_helper_timer_thread:
+                numberOfCycles++;
                 break;
             case c_timer :> from_controller:
                 if(from_controller == 1)
                 {
                     t :> start_time;
-                    timerRunning = 1;
+                    start_time += nullifier;
                     numberOfCycles = 0;
-                    helper = start_time-1;
                 }
                 else if(from_controller == 2)
                 {
                     t :> end_time;
-                    // Every Cycle is MAX_UNSIGNED_INT - 1, because every cycle is with one lower than MAX_UNSIGNED_INT
+                    end_time += nullifier;
+
+                    if(end_time <= start_time)
+                    {
+                        numberOfCycles++;
+                    }
+
+                    // Every Cycle is MAX_UNSIGNED_INT - 1, because every cycle is
+                    // with one lower than MAX_UNSIGNED_INT
                     resultingTime = (uint_Max);
                     resultingTime*= numberOfCycles;
                     resultingTime+=end_time-start_time;
@@ -218,10 +230,47 @@ void timer_thread(chanend c_timer)
                     printf("Time passed (pure)   : %llu\n", resultingTime);
                     printf("Time passed (seconds): %f\n", ((double)resultingTime/period));
                     printf("\n\n");
-                    timerRunning = 0;
                 }
                 break;
         }
+    }
+}
+
+// Helper timer thread, which detects overflow
+void helper_timer_thread(chanend c_helper_timer)
+{
+
+    unsigned int start_time;
+    unsigned int current_time;
+    unsigned int nullifier;
+
+    // We initialize a timer and find the constant
+    // which added to it would nullify it
+    timer t;
+    t :> start_time;
+    nullifier = -start_time;
+    start_time += nullifier;
+    while(1)
+    {
+        t :> current_time;
+        current_time += nullifier;
+        if(current_time < start_time)
+        {
+            c_helper_timer <: 1;
+        }
+        start_time = current_time;
+        delay_milliseconds(1000);
+    }
+}
+
+// Main timer thread, communicating with the other threads whcih request timing
+void timer_thread(chanend c_timer)
+{
+    chan c_helper_timer;
+    par
+    {
+        main_timer_thread(c_helper_timer, c_timer);
+        helper_timer_thread(c_helper_timer);
     }
 }
 
