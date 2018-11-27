@@ -30,11 +30,11 @@ port p_sda = XS1_PORT_1F;
 in port buttons = XS1_PORT_4E; //port to access xCore-200 buttons
 out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
 
-#define NO_LED          0X0000
-#define GREEN_LED_1     0x0001
-#define GREEN_LED_2     0x0004
-#define BLUE_LED        0x0002
-#define RED_LED         0x0008
+#define NO_LEDS              0X0000
+#define GREEN_SEPERATE_LED  0x0001
+#define GREEN_COMBINED_LED  0x0004
+#define BLUE_LED            0x0002
+#define RED_LED             0x0008
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -134,7 +134,7 @@ void calculateNextState(char matrix[IMHT][IMWD])
 // Currently the function just inverts the image
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, chanend buttons_to_distributor, chanend leds_to_distributor)
+void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, chanend buttons_to_distributor)
 {
   uchar val;
   int button_input;
@@ -153,28 +153,28 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
   // Send image to worker function
   char matrix[IMHT][IMWD];
   // Send message to light green
-  leds_to_distributor <: 1;
+  leds <: GREEN_SEPERATE_LED;
   delay_milliseconds(3000);
-  leds_to_distributor <: 2;
+  leds <: GREEN_COMBINED_LED;
   delay_milliseconds(3000);
-  leds_to_distributor <: 3;
+  leds <: BLUE_LED;
   delay_milliseconds(3000);
-  leds_to_distributor <: 4;
+  leds <: RED_LED;
   delay_milliseconds(3000);
-  leds_to_distributor <: 0;
+  leds <: NO_LEDS;
   delay_milliseconds(3000);
-  leds_to_distributor <: 4;
+  leds <: RED_LED;
   delay_milliseconds(3000);
-  leds_to_distributor <: 0;
+  leds <: NO_LEDS;
   delay_milliseconds(3000);
-  leds_to_distributor <: 4;
+  leds <: RED_LED;
   delay_milliseconds(3000);
   for(int a=0; a<100;a++)
   {
       delay_milliseconds(30);
-      leds_to_distributor <: 0;
+      leds <: NO_LEDS;
       delay_milliseconds(30);
-      leds_to_distributor <: 4;
+      leds <: RED_LED;
   }
   printf( "Printing... \n" );
   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
@@ -187,7 +187,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
   }
 
   // Send message to un-light green
-  leds_to_distributor <: 1;
+  leds <: 1;
 
   printMatrix(matrix);
 
@@ -212,23 +212,6 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
     }
   }
   printf( "\nOne processing round completed...\n" );
-}
-
-//DISPLAYS a LED pattern
-int showLEDs(out port p, chanend leds_to_distributor) {
-    int from_distributor;
-    int pattern;
-
-    while (1) {
-        leds_to_distributor :> from_distributor;   //receive new command from distributor
-        if(from_distributor == 0) pattern = NO_LED;
-        if(from_distributor == 1) pattern = GREEN_LED_1;
-        if(from_distributor == 2) pattern = GREEN_LED_2;
-        if(from_distributor == 3) pattern = BLUE_LED;
-        if(from_distributor == 4) pattern = RED_LED;
-        p <: pattern;                     //send pattern to LED port
-    }
-    return 0;
 }
 
 //READ BUTTONS and send button pattern to userAnt
@@ -438,17 +421,15 @@ char outfname[] = "testout.pgm"; //put your output image path here
 chan c_inIO, c_outIO, c_control;    //extend your channel definitions here
 chan c_timer;
 chan buttons_to_distributor;
-chan leds_to_distributor;
 
 par {
     i2c_master(i2c, 1, p_scl, p_sda, 10);   //server thread providing orientation data
     orientation(i2c[0],c_control);        //client thread reading orientation data
     DataInStream(infname, c_inIO);          //thread to read in a PGM image
     DataOutStream(outfname, c_outIO);       //thread to write out a PGM image
-    distributor(c_inIO, c_outIO, c_control, c_timer, buttons_to_distributor, leds_to_distributor);//thread to coordinate work on image
+    distributor(c_inIO, c_outIO, c_control, c_timer, buttons_to_distributor);//thread to coordinate work on image
     timer_thread(c_timer);
     buttonListener(buttons, buttons_to_distributor);
-    showLEDs(leds, leds_to_distributor);
   }
 
   return 0;
