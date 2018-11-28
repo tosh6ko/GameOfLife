@@ -30,7 +30,7 @@ port p_sda = XS1_PORT_1F;
 in port buttons = XS1_PORT_4E; //port to access xCore-200 buttons
 out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
 
-#define NO_LEDS              0X0000
+#define NO_LEDS             0X0000
 #define GREEN_SEPERATE_LED  0x0001
 #define GREEN_COMBINED_LED  0x0004
 #define BLUE_LED            0x0002
@@ -149,34 +149,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
       if(button_input == 14) break;
   }
 
-  printf( "Processing...\n" );
-  // Send image to worker function
+  // Array for the game state
   char matrix[IMHT][IMWD];
-  // Send message to light green
-  leds <: GREEN_SEPERATE_LED;
-  delay_milliseconds(3000);
-  leds <: GREEN_COMBINED_LED;
-  delay_milliseconds(3000);
-  leds <: BLUE_LED;
-  delay_milliseconds(3000);
-  leds <: RED_LED;
-  delay_milliseconds(3000);
-  leds <: NO_LEDS;
-  delay_milliseconds(3000);
-  leds <: RED_LED;
-  delay_milliseconds(3000);
-  leds <: NO_LEDS;
-  delay_milliseconds(3000);
-  leds <: RED_LED;
-  delay_milliseconds(3000);
-  for(int a=0; a<100;a++)
-  {
-      delay_milliseconds(30);
-      leds <: NO_LEDS;
-      delay_milliseconds(30);
-      leds <: RED_LED;
-  }
-  printf( "Printing... \n" );
+  printf( "Reading... \n" );
   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
     for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
       c_in :> val;
@@ -186,31 +161,39 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
     }
   }
 
-  // Send message to un-light green
-  leds <: 1;
+  printf( "Processing...\n" );
 
   printMatrix(matrix);
 
   c_timer <: 1;
 
-  // = Number of rounds for which we want to check
-  for(int a=0;a<3000;a++)
+  while(1)
   {
-      calculateNextState(matrix);
-      //printMatrix(matrix);
-      if(a%1000 == 0) printf("Current roud is %d.\n", a);
+      select
+      {
+          case buttons_to_distributor :> button_input:
+              if(button_input == 13)
+              {
+                  printf( "Saving to file... \n" );
+                  c_out <: 1;
+                  for( int y = 0; y < IMHT; y++ ) {   //go through all lines
+                    for( int x = 0; x < IMWD; x++ ) {//go through each pixel per line
+                        if(matrix[y][x]) c_out <: ((uchar)(0xFF));
+                        else c_out <: ((uchar)(0x00));
+                    }
+                  }
+              }
+              break;
+          default: calculateNextState(matrix);
+              break;
+      }
   }
+
+  calculateNextState(matrix);
 
   c_timer <: 2;
 
-  printf( "Saving to file... \n" );
-  for( int y = 0; y < IMHT; y++ ) {   //go through all lines
-    for( int x = 0; x < IMWD; x++ ) {//go through each pixel per line
-        if(matrix[y][x]) c_out <: ((uchar)(0xFF));
-        else c_out <: ((uchar)(0x00));
-        //c_out <: matrix[y][x]; //send some modified pixel out
-    }
-  }
+
   printf( "\nOne processing round completed...\n" );
 }
 
@@ -339,28 +322,42 @@ void timer_thread(chanend c_timer)
 void DataOutStream(char outfname[], chanend c_in)
 {
   int res;
+  int from_distributor;
   uchar line[ IMWD ];
 
-  //Open PGM file
-  printf( "DataOutStream: Start...\n" );
-  res = _openoutpgm( outfname, IMWD, IMHT );
-  if( res ) {
-    printf( "DataOutStream: Error opening %s\n.", outfname );
-    return;
+  while(1)
+  {
+      select
+      {
+          case c_in :> from_distributor:
+              if(from_distributor == 1)
+              {
+                  //Open PGM file
+                  printf( "DataOutStream: Start...\n" );
+                  res = _openoutpgm( outfname, IMWD, IMHT );
+                  if( res ) {
+                    printf( "DataOutStream: Error opening %s\n.", outfname );
+                    return;
+                  }
+
+                  //Compile each line of the image and write the image line-by-line
+                  for( int y = 0; y < IMHT; y++ ) {
+                    for( int x = 0; x < IMWD; x++ ) {
+                      c_in :> line[ x ];
+                    }
+                    _writeoutline( line, IMWD );
+                    printf( "DataOutStream: Line written to the file...\n" );
+                  }
+
+                  //Close the PGM image
+                  _closeoutpgm();
+                  printf( "DataOutStream: Done...\n" );
+              }
+              break;
+      }
+
   }
 
-  //Compile each line of the image and write the image line-by-line
-  for( int y = 0; y < IMHT; y++ ) {
-    for( int x = 0; x < IMWD; x++ ) {
-      c_in :> line[ x ];
-    }
-    _writeoutline( line, IMWD );
-    printf( "DataOutStream: Line written to the file...\n" );
-  }
-
-  //Close the PGM image
-  _closeoutpgm();
-  printf( "DataOutStream: Done...\n" );
   return;
 }
 
