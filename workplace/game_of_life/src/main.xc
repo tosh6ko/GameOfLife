@@ -127,6 +127,21 @@ void calculateNextState(char matrix[IMHT][IMWD])
     }
 }
 
+
+// Function to calculate the number of live cells
+int countLiveCells(char matrix[IMHT][IMWD])
+{
+    int result = 0;
+    for( int y = 0; y < IMHT; y++ )
+    {
+      for( int x = 0; x < IMWD; x++ )
+      {
+        if(matrix[y][x] == 1) result++;
+      }
+    }
+    return result;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 // Start your implementation by changing this function to implement the game of life
@@ -168,6 +183,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
 
   // printMatrix(matrix);
 
+  int rounds = 0;
+
   c_timer <: 1;
 
   while(1)
@@ -190,10 +207,27 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
               }
               break;
           case fromAcc :> int value:
-              printf("The current tilt is %d.\n", value);
+              if(value == 1)
+              {
+                  c_timer <: 2;
+                  leds <: RED_LED;
+                  printf("=================================\n");
+                  printf("Number of rounds    : %d\n", rounds);
+                  printf("Number of live cells: %d\n", countLiveCells(matrix));
+                  c_timer <: 3;
+                  c_timer :> int a;
+                  printf("=================================\n");
+
+                  fromAcc :> value;
+
+                  leds <: NO_LEDS;
+
+                  printf("Processing restarting.\n");
+              }
               break;
           default:
               calculateNextState(matrix);
+              rounds++;
               if(processing_state == 1)
               {
                   leds <: GREEN_SEPARATE_LED;
@@ -204,6 +238,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
                   leds <: NO_LEDS;
                   processing_state = 1;
               }
+              // delay_milliseconds(1000);
               break;
       }
   }
@@ -280,10 +315,9 @@ void main_timer_thread(chanend c_helper_timer, chanend c_timer)
                 }
                 else if(from_controller == 3)
                 {
-                    printf("Number of overflows  : %u\n", numberOfCycles);
+                    // printf("Number of overflows  : %u\n", numberOfCycles);
                     printf("Time passed (raw)    : %llu\n", resultingTime);
                     printf("Time passed (seconds): %f\n", ((double)resultingTime/period));
-                    printf("\n");
                     c_timer <: 1;
                 }
                 break;
