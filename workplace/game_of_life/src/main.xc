@@ -68,7 +68,7 @@ void DataInStream(char infname[], chanend c_out)
 
   //Close PGM image file
   _closeinpgm();
-  // printf( "DataInStream: Done...\n" );
+  printf( "DataInStream: Done...\n" );
   return;
 }
 
