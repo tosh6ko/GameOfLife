@@ -166,7 +166,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
 
   printf( "Processing...\n" );
 
-  printMatrix(matrix);
+  // printMatrix(matrix);
+
+  c_timer <: 1;
 
   while(1)
   {
@@ -187,12 +189,11 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
                   leds <: NO_LEDS;
               }
               break;
+          case fromAcc :> int value:
+              printf("The current tilt is %d.\n", value);
+              break;
           default:
-              c_timer <: 1;
               calculateNextState(matrix);
-              c_timer <: 2;
-              c_timer <: 3;
-              c_timer :> int a;
               if(processing_state == 1)
               {
                   leds <: GREEN_SEPARATE_LED;
@@ -279,8 +280,8 @@ void main_timer_thread(chanend c_helper_timer, chanend c_timer)
                 }
                 else if(from_controller == 3)
                 {
-                    printf("Number of cycles     : %u\n", numberOfCycles);
-                    printf("Time passed (pure)   : %llu\n", resultingTime);
+                    printf("Number of overflows  : %u\n", numberOfCycles);
+                    printf("Time passed (raw)    : %llu\n", resultingTime);
                     printf("Time passed (seconds): %f\n", ((double)resultingTime/period));
                     printf("\n");
                     c_timer <: 1;
@@ -409,11 +410,16 @@ void orientation( client interface i2c_master_if i2c, chanend toDist) {
     int x = read_acceleration(i2c, FXOS8700EQ_OUT_X_MSB);
 
     //send signal to distributor after first tilt
-    if (!tilted) {
-      if (x>30) {
-        tilted = 1 - tilted;
+    if (!tilted && (x>30 || x<-30))
+    {
+        // send that the board is tilted
         toDist <: 1;
-      }
+        tilted = 1 - tilted;
+    }
+    if(tilted && (x <= 30 && x>= -30))
+    {
+        toDist <: 0;
+        tilted = 1 - tilted;
     }
   }
 }
