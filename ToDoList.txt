@@ -1,6 +1,4 @@
-// 1. Make a timer thread
-// 1. Add button functionality
-// 1. One worker on separate thread
+1. ASK WHETHER WE SHOULD STOP THE TIMER WHILE TILTED!!!!!!!!
 1. Check the speed and do speed tests
 1. Split the char in 8 cells
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
