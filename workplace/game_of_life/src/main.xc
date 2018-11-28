@@ -222,7 +222,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
 
                   leds <: NO_LEDS;
 
-                  printf("Processing restarting.\n");
+                  printf("Processing restarted.\n");
               }
               break;
           default:
