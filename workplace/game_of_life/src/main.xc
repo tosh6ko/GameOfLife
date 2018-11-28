@@ -31,8 +31,8 @@ in port buttons = XS1_PORT_4E; //port to access xCore-200 buttons
 out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
 
 #define NO_LEDS             0X0000
-#define GREEN_SEPERATE_LED  0x0001
-#define GREEN_COMBINED_LED  0x0004
+#define GREEN_SEPARATE_LED  0x0001
+#define GREEN_LED           0x0004
 #define BLUE_LED            0x0002
 #define RED_LED             0x0008
 
@@ -138,6 +138,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
 {
   uchar val;
   int button_input;
+  char processing_state = 1;
 
   //Starting up and wait for tilting of the xCore-200 Explorer
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
@@ -152,6 +153,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
   // Array for the game state
   char matrix[IMHT][IMWD];
   printf( "Reading... \n" );
+  leds <: GREEN_LED;
   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
     for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
       c_in :> val;
@@ -160,12 +162,11 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
       else matrix[y][x] = 0;
     }
   }
+  leds <: NO_LEDS;
 
   printf( "Processing...\n" );
 
   printMatrix(matrix);
-
-  c_timer <: 1;
 
   while(1)
   {
@@ -175,6 +176,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
               if(button_input == 13)
               {
                   printf( "Saving to file... \n" );
+                  leds <: BLUE_LED;
                   c_out <: 1;
                   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
                     for( int x = 0; x < IMWD; x++ ) {//go through each pixel per line
@@ -182,19 +184,26 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
                         else c_out <: ((uchar)(0x00));
                     }
                   }
+                  leds <: NO_LEDS;
               }
               break;
-          default: calculateNextState(matrix);
+          default:
+              c_timer <: 1;
+              calculateNextState(matrix);
+              c_timer <: 2;
+              if(processing_state == 1)
+              {
+                  leds <: GREEN_SEPARATE_LED;
+                  processing_state = 0;
+              }
+              else
+              {
+                  leds <: NO_LEDS;
+                  processing_state = 1;
+              }
               break;
       }
   }
-
-  calculateNextState(matrix);
-
-  c_timer <: 2;
-
-
-  printf( "\nOne processing round completed...\n" );
 }
 
 //READ BUTTONS and send button pattern to userAnt
