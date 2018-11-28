@@ -212,8 +212,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
                   c_timer <: 2;
                   leds <: RED_LED;
                   printf("=================================\n");
-                  printf("Number of rounds    : %d\n", rounds);
-                  printf("Number of live cells: %d\n", countLiveCells(matrix));
+                  printf("Number of rounds     : %d\n", rounds);
+                  printf("Number of live cells : %d\n", countLiveCells(matrix));
                   c_timer <: 3;
                   c_timer :> int a;
                   printf("=================================\n");
