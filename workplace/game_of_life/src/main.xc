@@ -116,6 +116,56 @@ void DataOutStream(char outfname[], chanend c_in)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
+// Initialise and  read orientation
+// Send every change in tiltness through the channel
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+void orientation( client interface i2c_master_if i2c, chanend toDist) {
+  i2c_regop_res_t result;
+  char status_data = 0;
+  int tilted = 0;
+
+  // Configure FXOS8700EQ
+  result = i2c.write_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_XYZ_DATA_CFG_REG, 0x01);
+  if (result != I2C_REGOP_SUCCESS) {
+    printf("I2C write reg failed\n");
+  }
+
+  // Enable FXOS8700EQ
+  result = i2c.write_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_CTRL_REG_1, 0x01);
+  if (result != I2C_REGOP_SUCCESS) {
+    printf("I2C write reg failed\n");
+  }
+
+  //Probe the orientation x-axis forever
+  while (1) {
+
+    //check until new orientation data is available
+    do {
+      status_data = i2c.read_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_DR_STATUS, result);
+    } while (!status_data & 0x08);
+
+    //get new x-axis tilt value
+    int x = read_acceleration(i2c, FXOS8700EQ_OUT_X_MSB);
+
+    //send signal to distributor after first tilt
+    if (!tilted && (x>30 || x<-30))
+    {
+        // send that the board is tilted
+        toDist <: 1;
+        tilted = 1 - tilted;
+    }
+    if(tilted && (x <= 30 && x>= -30))
+    {
+        // Send that the board is no longer tilted
+        toDist <: 0;
+        tilted = 1 - tilted;
+    }
+  }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
 // Print matrix to the terminal
 //
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -132,6 +182,12 @@ void printMatrix(char matrix[IMHT][IMWD])
     printf("\n");
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Calculate next state of a cell based on the number of neighbours
+// and its current state
+//
+/////////////////////////////////////////////////////////////////////////////////////////
 char isAlive(int neighbour, char previousState)
 {
     if(neighbour == 3) return 1;
@@ -417,81 +473,33 @@ void helper_timer_thread(chanend c_helper_timer)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Initialise and  read orientation
-// Send every change in tiltness through the channel
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-void orientation( client interface i2c_master_if i2c, chanend toDist) {
-  i2c_regop_res_t result;
-  char status_data = 0;
-  int tilted = 0;
-
-  // Configure FXOS8700EQ
-  result = i2c.write_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_XYZ_DATA_CFG_REG, 0x01);
-  if (result != I2C_REGOP_SUCCESS) {
-    printf("I2C write reg failed\n");
-  }
-  
-  // Enable FXOS8700EQ
-  result = i2c.write_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_CTRL_REG_1, 0x01);
-  if (result != I2C_REGOP_SUCCESS) {
-    printf("I2C write reg failed\n");
-  }
-
-  //Probe the orientation x-axis forever
-  while (1) {
-
-    //check until new orientation data is available
-    do {
-      status_data = i2c.read_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_DR_STATUS, result);
-    } while (!status_data & 0x08);
-
-    //get new x-axis tilt value
-    int x = read_acceleration(i2c, FXOS8700EQ_OUT_X_MSB);
-
-    //send signal to distributor after first tilt
-    if (!tilted && (x>30 || x<-30))
-    {
-        // send that the board is tilted
-        toDist <: 1;
-        tilted = 1 - tilted;
-    }
-    if(tilted && (x <= 30 && x>= -30))
-    {
-        // Send that the board is no longer tilted
-        toDist <: 0;
-        tilted = 1 - tilted;
-    }
-  }
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
 // Orchestrate concurrent system and start up all threads
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 int main(void)
 {
-    i2c_master_if i2c[1];               // Interface to orientation
+    i2c_master_if i2c[1];               // interface to orientation
 
-    char infname[] = "test.pgm";        // Input image path
-    char outfname[] = "testout.pgm";    // Output image path
-    chan c_inIO;                        // Channel for input file stream
-    chan c_outIO;                       // Channel for output file stream
-    chan c_control;                     // Channel for accelerometer
-    chan c_timer;                       // Channel for main timer
-    chan c_helper_timer;                // Channel for helper timer thread
-    chan c_buttons;                     // Channel for buttons listener thread
+    char infname[] = "test.pgm";        // input image path
+    char outfname[] = "testout.pgm";    // output image path
+    chan c_inIO;                        // channel for input file stream
+    chan c_outIO;                       // channel for output file stream
+    chan c_control;                     // channel for accelerometer
+    chan c_timer;                       // channel for main timer
+    chan c_helper_timer;                // channel for helper timer thread
+    chan c_buttons;                     // channel for buttons listener thread
 
-    par {
-        i2c_master(i2c, 1, p_scl, p_sda, 10);                           //server thread providing orientation data
-        orientation(i2c[0],c_control);                                  //client thread reading orientation data
-        DataInStream(infname, c_inIO);                                  //thread to read in a PGM image
-        DataOutStream(outfname, c_outIO);                               //thread to write out a PGM image
-        distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons);    //thread to coordinate work on image
-        main_timer_thread(c_helper_timer, c_timer);                     //
-        helper_timer_thread(c_helper_timer);                            //
-        buttonListener(buttons, buttons_to_distributor);                //
+    par
+    {
+        DataInStream(infname, c_inIO);                                  // thread to read in a PGM image
+        DataOutStream(outfname, c_outIO);                               // thread to write out a PGM image
+        i2c_master(i2c, 1, p_scl, p_sda, 10);                           // server thread providing orientation data
+        orientation(i2c[0],c_control);                                  // client thread reading orientation data
+        buttonListener(buttons, buttons_to_distributor);                // thread listening for button action
+        main_timer_thread(c_helper_timer, c_timer);                     // main timer thread
+        helper_timer_thread(c_helper_timer);                            // thread checking for timer overflow
+
+        distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons);    // thread to coordinate work on image
       }
 
       return 0;
