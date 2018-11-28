@@ -40,23 +40,29 @@ out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
 // Read Image from PGM file from path infname[] to channel c_out
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void DataInStream(char infname[], chanend c_out)
+void dataInStream(char infname[], chanend c_out)
 {
   int res;
   uchar line[ IMWD ];
+
+  c_out :> int a;
+
   printf( "DataInStream: Start...\n" );
 
   //Open PGM file
   res = _openinpgm( infname, IMWD, IMHT );
-  if( res ) {
+  if( res )
+  {
     printf( "DataInStream: Error openening %s\n.", infname );
     return;
   }
 
   //Read image line-by-line and send byte by byte to channel c_out
-  for( int y = 0; y < IMHT; y++ ) {
+  for( int y = 0; y < IMHT; y++ )
+  {
     _readinline( line, IMWD );
-    for( int x = 0; x < IMWD; x++ ) {
+    for( int x = 0; x < IMWD; x++ )
+    {
       c_out <: line[ x ];
     }
   }
@@ -72,30 +78,32 @@ void DataInStream(char infname[], chanend c_out)
 // Write pixel stream from channel c_in to PGM image file
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void DataOutStream(char outfname[], chanend c_in)
+void dataOutStream(char outfname[], chanend c_in)
 {
   int res;
-  int from_distributor;
   uchar line[ IMWD ];
 
   while(1)
   {
       select
       {
-          case c_in :> from_distributor:
+          case c_in :> int from_distributor:
               if(from_distributor == 1)
               {
                   //Open PGM file
                   printf( "DataOutStream: Start...\n" );
                   res = _openoutpgm( outfname, IMWD, IMHT );
-                  if( res ) {
+                  if( res )
+                  {
                     printf( "DataOutStream: Error opening %s\n.", outfname );
                     return;
                   }
 
                   //Compile each line of the image and write the image line-by-line
-                  for( int y = 0; y < IMHT; y++ ) {
-                    for( int x = 0; x < IMWD; x++ ) {
+                  for( int y = 0; y < IMHT; y++ )
+                  {
+                    for( int x = 0; x < IMWD; x++ )
+                    {
                       c_in :> line[ x ];
                     }
                     _writeoutline( line, IMWD );
@@ -120,48 +128,176 @@ void DataOutStream(char outfname[], chanend c_in)
 // Send every change in tiltness through the channel
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void orientation( client interface i2c_master_if i2c, chanend toDist) {
-  i2c_regop_res_t result;
-  char status_data = 0;
-  int tilted = 0;
+void orientation( client interface i2c_master_if i2c, chanend toDist)
+{
+    i2c_regop_res_t result;
+    char status_data = 0;
+    int tilted = 0;
 
-  // Configure FXOS8700EQ
-  result = i2c.write_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_XYZ_DATA_CFG_REG, 0x01);
-  if (result != I2C_REGOP_SUCCESS) {
-    printf("I2C write reg failed\n");
-  }
-
-  // Enable FXOS8700EQ
-  result = i2c.write_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_CTRL_REG_1, 0x01);
-  if (result != I2C_REGOP_SUCCESS) {
-    printf("I2C write reg failed\n");
-  }
-
-  //Probe the orientation x-axis forever
-  while (1) {
-
-    //check until new orientation data is available
-    do {
-      status_data = i2c.read_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_DR_STATUS, result);
-    } while (!status_data & 0x08);
-
-    //get new x-axis tilt value
-    int x = read_acceleration(i2c, FXOS8700EQ_OUT_X_MSB);
-
-    //send signal to distributor after first tilt
-    if (!tilted && (x>30 || x<-30))
+    // Configure FXOS8700EQ
+    result = i2c.write_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_XYZ_DATA_CFG_REG, 0x01);
+    if (result != I2C_REGOP_SUCCESS)
     {
-        // send that the board is tilted
-        toDist <: 1;
-        tilted = 1 - tilted;
+        printf("I2C write reg failed\n");
     }
-    if(tilted && (x <= 30 && x>= -30))
+
+    // Enable FXOS8700EQ
+    result = i2c.write_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_CTRL_REG_1, 0x01);
+    if (result != I2C_REGOP_SUCCESS)
     {
-        // Send that the board is no longer tilted
-        toDist <: 0;
-        tilted = 1 - tilted;
+        printf("I2C write reg failed\n");
     }
-  }
+
+    //Probe the orientation x-axis forever
+    while (1)
+    {
+        //check until new orientation data is available
+        do {
+          status_data = i2c.read_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_DR_STATUS, result);
+        } while (!status_data & 0x08);
+
+        //get new x-axis tilt value
+        int x = read_acceleration(i2c, FXOS8700EQ_OUT_X_MSB);
+
+        // if the board is now tilted, send to the distributor 1
+        if (!tilted && (x>30 || x<-30))
+        {
+            toDist <: 1;
+            tilted = 1 - tilted;
+        }
+        // if the board is no longer tilted, send to the distributor 0
+        if(tilted && (x <= 30 && x>= -30))
+        {
+            toDist <: 0;
+            tilted = 1 - tilted;
+        }
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Listens for button input and sends it to the distributor
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+void buttonListener(in port b, chanend c_buttons)
+{
+    int r;
+
+    while (1)
+    {
+        b when pinseq(15)  :> r;    // check that no button is pressed
+        b when pinsneq(15) :> r;    // check if some buttons are pressed
+        if ((r==13) || (r==14))     // if either button is pressed
+        {
+            c_buttons <: r;         // send button pattern to userAnt
+        }
+    }
+    return;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Main timer thread, communicating with the
+// client and running concurrently with the helper thread
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+void mainTimerThread(chanend c_helper_timer, chanend c_timer)
+{
+    unsigned int startTime;
+    unsigned int endTime;
+    unsigned int nullifier;
+    unsigned int numberOfOverflows;
+    unsigned long long int resultingTime;
+    int fromController;
+    int fromHelperTimerThread;
+    unsigned int period = 100000000;                      // period of 1 second
+    unsigned long long overflowSize = 4294967296LL;   // the length of one overflow
+
+    // We initialize a timer and find the constant
+    // which added to it would nullify it
+    // This is done to ensure that the two timer threads
+    // overflow at the same time (they don't share the same timer)
+
+    timer t;
+    t :> startTime;
+    nullifier  =  -startTime;
+    startTime +=  nullifier;
+
+
+    while (1)
+    {
+        select
+        {
+            case c_helper_timer :> fromHelperTimerThread:
+                numberOfOverflows++;
+                break;
+
+            case c_timer :> fromController:
+                if(fromController == 1)
+                {
+                    t :> startTime;
+                    startTime += nullifier;
+                    numberOfOverflows = 0;
+                }
+                else if(fromController == 2)
+                {
+                    t :> endTime;
+                    endTime += nullifier;
+
+                    if(endTime <= startTime)
+                    {
+                        numberOfOverflows++;
+                    }
+
+                    resultingTime   =   overflowSize;
+                    resultingTime  *=   numberOfOverflows;
+                    resultingTime  +=   endTime-startTime;
+                }
+                else if(fromController == 3)
+                {
+                    // printf("Number of overflows  : %u\n", numberOfCycles);
+                    printf("Time passed (raw)    : %llu\n", resultingTime);
+                    printf("Time passed (seconds): %f\n", ((double)resultingTime/period));
+                    c_timer <: 1;
+                }
+                break;
+        }
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Helper timer thread, which checks continuously for overflows of the timer
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+void helperTimerThread(chanend c_helper_timer)
+{
+    unsigned int startTime;
+    unsigned int currentTime;
+    unsigned int nullifier;
+
+    // We initialize a timer and find the constant
+    // which added to it would nullify it
+    // This is done to ensure that the two timer threads
+    // overflow at the same time (they don't share the same timer)
+
+    timer t;
+    t :> startTime;
+    nullifier  =  -startTime;
+    startTime +=  nullifier;
+
+    // Every second we check if the timer has overflowed
+    while(1)
+    {
+        t :> currentTime;
+        currentTime += nullifier;
+        if(currentTime < startTime)
+        {
+            c_helper_timer <: 1;
+        }
+        startTime = currentTime;
+        delay_milliseconds(1000);
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -171,6 +307,7 @@ void orientation( client interface i2c_master_if i2c, chanend toDist) {
 /////////////////////////////////////////////////////////////////////////////////////////
 void printMatrix(char matrix[IMHT][IMWD])
 {
+    printf("Matrix console printing starting.\n");
     for(int a=0;a<IMHT;a++)
     {
         for(int b=0;b<IMWD;b++)
@@ -180,6 +317,7 @@ void printMatrix(char matrix[IMHT][IMWD])
         printf("\n");
     }
     printf("\n");
+    printf("Matrix console printing ended.\n");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -188,10 +326,10 @@ void printMatrix(char matrix[IMHT][IMWD])
 // and its current state
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-char isAlive(int neighbour, char previousState)
+char isAlive(int neighbours, char previousState)
 {
-    if(neighbour == 3) return 1;
-    if(neighbour == 2 && previousState == 1) return 1;
+    if(neighbours == 3)                         return 1;
+    if(neighbours == 2 && previousState == 1)   return 1;
     return 0;
 }
 
@@ -203,6 +341,12 @@ char isAlive(int neighbour, char previousState)
 void calculateNextState(char matrix[IMHT][IMWD])
 {
     char previous[IMHT][IMWD];
+    const int neighbourX[8] = {-1,  0, 1, -1, 1, -1,  0, 1};
+    const int neighbourY[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
+    int numberOfAlive;
+    int nX;
+    int nY;
+
     for(int a = 0; a < IMHT; a++)
     {
         for(int b = 0; b < IMWD; b++)
@@ -211,11 +355,6 @@ void calculateNextState(char matrix[IMHT][IMWD])
         }
     }
 
-    const int neighbourX[8] = {-1,  0, 1, -1, 1, -1,  0, 1};
-    const int neighbourY[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
-    int numberOfAlive;
-    int nX;
-    int nY;
     for(int a = 0; a < IMHT; a++)
     {
         for(int b = 0; b < IMWD; b++)
@@ -241,6 +380,7 @@ void calculateNextState(char matrix[IMHT][IMWD])
 int countLiveCells(char matrix[IMHT][IMWD])
 {
     int result = 0;
+
     for( int y = 0; y < IMHT; y++ )
     {
       for( int x = 0; x < IMWD; x++ )
@@ -248,6 +388,7 @@ int countLiveCells(char matrix[IMHT][IMWD])
         if(matrix[y][x] == 1) result++;
       }
     }
+
     return result;
 }
 
@@ -257,30 +398,31 @@ int countLiveCells(char matrix[IMHT][IMWD])
 // to worker threads which implement it.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, chanend buttons_to_distributor)
+void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer, chanend c_buttons)
 {
   uchar val;
-  int button_input;
-  char processing_state = 1;
+  int   buttonInput;
+  char  greenLedState = 1;
+  char  matrix[IMHT][IMWD];      // array for the game state
+  int   rounds = 0;               // number of passed rounds
 
-  //Starting up and wait for tilting of the xCore-200 Explorer
+  //Starting up and wait for pressing of SW1 button
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
   printf( "Waiting for press of SW1 button...\n" );
 
   while(1)
   {
-      buttons_to_distributor :> button_input;
-      if(button_input == 14) break;
+      c_buttons :> buttonInput;
+      if(buttonInput == 14) break;
   }
 
-  // Array for the game state
-  char matrix[IMHT][IMWD];
-  printf( "Reading... \n" );
   leds <: GREEN_LED;
-  for( int y = 0; y < IMHT; y++ ) {   //go through all lines
-    for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
+  c_in <: 1;
+  for( int y = 0; y < IMHT; y++ )       //go through all lines
+  {
+    for( int x = 0; x < IMWD; x++ )     //go through each pixel per line
+    {
       c_in :> val;
-      //read the pixel value
       if(val) matrix[y][x] = 1;
       else matrix[y][x] = 0;
     }
@@ -291,22 +433,22 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
 
   // printMatrix(matrix);
 
-  int rounds = 0;
-
   c_timer <: 1;
 
   while(1)
   {
       select
       {
-          case buttons_to_distributor :> button_input:
-              if(button_input == 13)
+          case c_buttons :> buttonInput:
+              if(buttonInput == 13)
               {
                   printf( "Saving to file... \n" );
-                  leds <: BLUE_LED;
+                  leds  <: BLUE_LED;
                   c_out <: 1;
-                  for( int y = 0; y < IMHT; y++ ) {   //go through all lines
-                    for( int x = 0; x < IMWD; x++ ) {//go through each pixel per line
+                  for( int y = 0; y < IMHT; y++ )       // go through all lines
+                  {
+                    for( int x = 0; x < IMWD; x++ )     // go through each pixel per line
+                    {
                         if(matrix[y][x]) c_out <: ((uchar)(0xFF));
                         else c_out <: ((uchar)(0x00));
                     }
@@ -314,11 +456,11 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
                   leds <: NO_LEDS;
               }
               break;
-          case fromAcc :> int value:
+          case c_control :> int value:
               if(value == 1)
               {
-                  c_timer <: 2;
-                  leds <: RED_LED;
+                  c_timer   <: 2;
+                  leds      <: RED_LED;
                   printf("=================================\n");
                   printf("Number of rounds     : %d\n", rounds);
                   printf("Number of live cells : %d\n", countLiveCells(matrix));
@@ -326,149 +468,29 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
                   c_timer :> int a;
                   printf("=================================\n");
 
-                  fromAcc :> value;
-
-                  leds <: NO_LEDS;
+                  c_control :> value;
+                  leds      <: NO_LEDS;
 
                   printf("Processing restarted.\n");
               }
               break;
+
           default:
               calculateNextState(matrix);
               rounds++;
-              if(processing_state == 1)
+              if(greenLedState)
               {
                   leds <: GREEN_SEPARATE_LED;
-                  processing_state = 0;
               }
               else
               {
                   leds <: NO_LEDS;
-                  processing_state = 1;
               }
+              greenLedState = 1 - greenLedState;
               // delay_milliseconds(1000);
               break;
       }
   }
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-// Listens for button input and sends it to the distributor
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-void buttonListener(in port b, chanend buttons_to_distributor) {
-  int r;
-  int running = 1;
-  while (running) {
-    b when pinseq(15)  :> r;    // check that no button is pressed
-    b when pinsneq(15) :> r;    // check if some buttons are pressed
-    if ((r==13) || (r==14))     // if either button is pressed
-    {
-        buttons_to_distributor <: r;             // send button pattern to userAnt
-    }
-  }
-  return;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-// Main timer thread, communicating with the
-// client and running concurrently with the helper thread
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-void main_timer_thread(chanend c_helper_timer, chanend c_timer)
-{
-    unsigned int start_time;
-    unsigned int end_time;
-    unsigned int nullifier;
-
-    // We initialize a timer and find the constant
-    // which added to it would nullify it
-    timer t;
-    t :> start_time;
-    nullifier = -start_time;
-    start_time += nullifier;
-    unsigned int numberOfCycles;
-    unsigned long long int resultingTime;
-
-    int from_controller;
-    int from_helper_timer_thread;
-
-
-    const unsigned int period = 100000000; // period of 1s
-    const unsigned long long int uint_Max = 4294967295LL;
-
-    while (1)
-    {
-        select
-        {
-            case c_helper_timer :> from_helper_timer_thread:
-                numberOfCycles++;
-                break;
-            case c_timer :> from_controller:
-                if(from_controller == 1)
-                {
-                    t :> start_time;
-                    start_time += nullifier;
-                    numberOfCycles = 0;
-                }
-                else if(from_controller == 2)
-                {
-                    t :> end_time;
-                    end_time += nullifier;
-
-                    if(end_time <= start_time)
-                    {
-                        numberOfCycles++;
-                    }
-
-                    // Every Cycle is MAX_UNSIGNED_INT - 1, because every cycle is
-                    // with one lower than MAX_UNSIGNED_INT
-                    resultingTime = (uint_Max);
-                    resultingTime*= numberOfCycles;
-                    resultingTime+=end_time-start_time;
-                }
-                else if(from_controller == 3)
-                {
-                    // printf("Number of overflows  : %u\n", numberOfCycles);
-                    printf("Time passed (raw)    : %llu\n", resultingTime);
-                    printf("Time passed (seconds): %f\n", ((double)resultingTime/period));
-                    c_timer <: 1;
-                }
-                break;
-        }
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-// Helper timer thread, which checks continuously for overflows of the timer
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-void helper_timer_thread(chanend c_helper_timer)
-{
-    unsigned int start_time;
-    unsigned int current_time;
-    unsigned int nullifier;
-
-    // We initialize a timer and find the constant
-    // which added to it would nullify it
-    timer t;
-    t :> start_time;
-    nullifier = -start_time;
-    start_time += nullifier;
-    while(1)
-    {
-        t :> current_time;
-        current_time += nullifier;
-        if(current_time < start_time)
-        {
-            c_helper_timer <: 1;
-        }
-        start_time = current_time;
-        delay_milliseconds(1000);
-    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -491,13 +513,13 @@ int main(void)
 
     par
     {
-        DataInStream(infname, c_inIO);                                  // thread to read in a PGM image
-        DataOutStream(outfname, c_outIO);                               // thread to write out a PGM image
-        i2c_master(i2c, 1, p_scl, p_sda, 10);                           // server thread providing orientation data
-        orientation(i2c[0],c_control);                                  // client thread reading orientation data
-        buttonListener(buttons, buttons_to_distributor);                // thread listening for button action
-        main_timer_thread(c_helper_timer, c_timer);                     // main timer thread
-        helper_timer_thread(c_helper_timer);                            // thread checking for timer overflow
+        dataInStream(infname, c_inIO);              // thread to read in a PGM image
+        dataOutStream(outfname, c_outIO);           // thread to write out a PGM image
+        i2c_master(i2c, 1, p_scl, p_sda, 10);       // server thread providing orientation data
+        orientation(i2c[0],c_control);              // client thread reading orientation data
+        buttonListener(buttons, c_buttons);         // thread listening for button action
+        mainTimerThread(c_helper_timer, c_timer);   // main timer thread
+        helperTimerThread(c_helper_timer);          // thread checking for timer overflow
 
         distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons);    // thread to coordinate work on image
       }
