@@ -191,6 +191,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
               c_timer <: 1;
               calculateNextState(matrix);
               c_timer <: 2;
+              c_timer <: 3;
+              c_timer :> int a;
               if(processing_state == 1)
               {
                   leds <: GREEN_SEPARATE_LED;
@@ -274,11 +276,14 @@ void main_timer_thread(chanend c_helper_timer, chanend c_timer)
                     resultingTime = (uint_Max);
                     resultingTime*= numberOfCycles;
                     resultingTime+=end_time-start_time;
-                    printf("\n\n");
+                }
+                else if(from_controller == 3)
+                {
                     printf("Number of cycles     : %u\n", numberOfCycles);
                     printf("Time passed (pure)   : %llu\n", resultingTime);
                     printf("Time passed (seconds): %f\n", ((double)resultingTime/period));
-                    printf("\n\n");
+                    printf("\n");
+                    c_timer <: 1;
                 }
                 break;
         }
