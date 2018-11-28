@@ -1,5 +1,4 @@
-// COMS20001 - Cellular Automaton Farm - Initial Code Skeleton
-// (using the XMOS i2c accelerometer demo code)
+// COMS20001 - Cellular Automaton Farm
 
 #include <platform.h>
 #include <xs1.h>
@@ -59,11 +58,7 @@ void DataInStream(char infname[], chanend c_out)
     _readinline( line, IMWD );
     for( int x = 0; x < IMWD; x++ ) {
       c_out <: line[ x ];
-      // Printing 0-s and 255-s
-      //printf( "%d", line[ x ] ); //show image values
     }
-    //
-    //printf( "\n" );
   }
 
   //Close PGM image file
@@ -72,7 +67,58 @@ void DataInStream(char infname[], chanend c_out)
   return;
 }
 
-// Function to print our matrix to the terminal
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Write pixel stream from channel c_in to PGM image file
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+void DataOutStream(char outfname[], chanend c_in)
+{
+  int res;
+  int from_distributor;
+  uchar line[ IMWD ];
+
+  while(1)
+  {
+      select
+      {
+          case c_in :> from_distributor:
+              if(from_distributor == 1)
+              {
+                  //Open PGM file
+                  printf( "DataOutStream: Start...\n" );
+                  res = _openoutpgm( outfname, IMWD, IMHT );
+                  if( res ) {
+                    printf( "DataOutStream: Error opening %s\n.", outfname );
+                    return;
+                  }
+
+                  //Compile each line of the image and write the image line-by-line
+                  for( int y = 0; y < IMHT; y++ ) {
+                    for( int x = 0; x < IMWD; x++ ) {
+                      c_in :> line[ x ];
+                    }
+                    _writeoutline( line, IMWD );
+                    printf( "DataOutStream: Line written to the file...\n" );
+                  }
+
+                  //Close the PGM image
+                  _closeoutpgm();
+                  printf( "DataOutStream: Done...\n" );
+              }
+              break;
+      }
+
+  }
+
+  return;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Print matrix to the terminal
+//
+/////////////////////////////////////////////////////////////////////////////////////////
 void printMatrix(char matrix[IMHT][IMWD])
 {
     for(int a=0;a<IMHT;a++)
@@ -93,7 +139,11 @@ char isAlive(int neighbour, char previousState)
     return 0;
 }
 
-// Function to calculate next state
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Calculate next state
+//
+/////////////////////////////////////////////////////////////////////////////////////////
 void calculateNextState(char matrix[IMHT][IMWD])
 {
     char previous[IMHT][IMWD];
@@ -127,8 +177,11 @@ void calculateNextState(char matrix[IMHT][IMWD])
     }
 }
 
-
-// Function to calculate the number of live cells
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Count number of all live cells
+//
+/////////////////////////////////////////////////////////////////////////////////////////
 int countLiveCells(char matrix[IMHT][IMWD])
 {
     int result = 0;
@@ -144,9 +197,8 @@ int countLiveCells(char matrix[IMHT][IMWD])
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Start your implementation by changing this function to implement the game of life
-// by farming out parts of the image to worker threads who implement it...
-// Currently the function just inverts the image
+// Function, which implements game of life by farming out parts of the gamestate
+// to worker threads which implement it.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, chanend buttons_to_distributor)
@@ -244,7 +296,11 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend c_timer, 
   }
 }
 
-//READ BUTTONS and send button pattern to userAnt
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Listens for button input and sends it to the distributor
+//
+/////////////////////////////////////////////////////////////////////////////////////////
 void buttonListener(in port b, chanend buttons_to_distributor) {
   int r;
   int running = 1;
@@ -259,8 +315,12 @@ void buttonListener(in port b, chanend buttons_to_distributor) {
   return;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
+//
 // Main timer thread, communicating with the
 // client and running concurrently with the helper thread
+//
+/////////////////////////////////////////////////////////////////////////////////////////
 void main_timer_thread(chanend c_helper_timer, chanend c_timer)
 {
     unsigned int start_time;
@@ -325,10 +385,13 @@ void main_timer_thread(chanend c_helper_timer, chanend c_timer)
     }
 }
 
-// Helper timer thread, which detects overflow
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Helper timer thread, which checks continuously for overflows of the timer
+//
+/////////////////////////////////////////////////////////////////////////////////////////
 void helper_timer_thread(chanend c_helper_timer)
 {
-
     unsigned int start_time;
     unsigned int current_time;
     unsigned int nullifier;
@@ -352,67 +415,10 @@ void helper_timer_thread(chanend c_helper_timer)
     }
 }
 
-// Main timer thread, communicating with the other threads whcih request timing
-void timer_thread(chanend c_timer)
-{
-    chan c_helper_timer;
-    par
-    {
-        main_timer_thread(c_helper_timer, c_timer);
-        helper_timer_thread(c_helper_timer);
-    }
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Write pixel stream from channel c_in to PGM image file
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-void DataOutStream(char outfname[], chanend c_in)
-{
-  int res;
-  int from_distributor;
-  uchar line[ IMWD ];
-
-  while(1)
-  {
-      select
-      {
-          case c_in :> from_distributor:
-              if(from_distributor == 1)
-              {
-                  //Open PGM file
-                  printf( "DataOutStream: Start...\n" );
-                  res = _openoutpgm( outfname, IMWD, IMHT );
-                  if( res ) {
-                    printf( "DataOutStream: Error opening %s\n.", outfname );
-                    return;
-                  }
-
-                  //Compile each line of the image and write the image line-by-line
-                  for( int y = 0; y < IMHT; y++ ) {
-                    for( int x = 0; x < IMWD; x++ ) {
-                      c_in :> line[ x ];
-                    }
-                    _writeoutline( line, IMWD );
-                    printf( "DataOutStream: Line written to the file...\n" );
-                  }
-
-                  //Close the PGM image
-                  _closeoutpgm();
-                  printf( "DataOutStream: Done...\n" );
-              }
-              break;
-      }
-
-  }
-
-  return;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-// Initialise and  read orientation, send first tilt event to channel
+// Initialise and  read orientation
+// Send every change in tiltness through the channel
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void orientation( client interface i2c_master_if i2c, chanend toDist) {
@@ -452,6 +458,7 @@ void orientation( client interface i2c_master_if i2c, chanend toDist) {
     }
     if(tilted && (x <= 30 && x>= -30))
     {
+        // Send that the board is no longer tilted
         toDist <: 0;
         tilted = 1 - tilted;
     }
@@ -463,25 +470,29 @@ void orientation( client interface i2c_master_if i2c, chanend toDist) {
 // Orchestrate concurrent system and start up all threads
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-int main(void) {
+int main(void)
+{
+    i2c_master_if i2c[1];               // Interface to orientation
 
-i2c_master_if i2c[1];               //interface to orientation
+    char infname[] = "test.pgm";        // Input image path
+    char outfname[] = "testout.pgm";    // Output image path
+    chan c_inIO;                        // Channel for input file stream
+    chan c_outIO;                       // Channel for output file stream
+    chan c_control;                     // Channel for accelerometer
+    chan c_timer;                       // Channel for main timer
+    chan c_helper_timer;                // Channel for helper timer thread
+    chan c_buttons;                     // Channel for buttons listener thread
 
-char infname[] = "test.pgm";     //put your input image path here
-char outfname[] = "testout.pgm"; //put your output image path here
-chan c_inIO, c_outIO, c_control;    //extend your channel definitions here
-chan c_timer;
-chan buttons_to_distributor;
+    par {
+        i2c_master(i2c, 1, p_scl, p_sda, 10);                           //server thread providing orientation data
+        orientation(i2c[0],c_control);                                  //client thread reading orientation data
+        DataInStream(infname, c_inIO);                                  //thread to read in a PGM image
+        DataOutStream(outfname, c_outIO);                               //thread to write out a PGM image
+        distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons);    //thread to coordinate work on image
+        main_timer_thread(c_helper_timer, c_timer);                     //
+        helper_timer_thread(c_helper_timer);                            //
+        buttonListener(buttons, buttons_to_distributor);                //
+      }
 
-par {
-    i2c_master(i2c, 1, p_scl, p_sda, 10);   //server thread providing orientation data
-    orientation(i2c[0],c_control);        //client thread reading orientation data
-    DataInStream(infname, c_inIO);          //thread to read in a PGM image
-    DataOutStream(outfname, c_outIO);       //thread to write out a PGM image
-    distributor(c_inIO, c_outIO, c_control, c_timer, buttons_to_distributor);//thread to coordinate work on image
-    timer_thread(c_timer);
-    buttonListener(buttons, buttons_to_distributor);
-  }
-
-  return 0;
+      return 0;
 }
