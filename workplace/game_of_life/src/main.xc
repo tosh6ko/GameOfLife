@@ -70,6 +70,9 @@ void dataInStream(char infname[], chanend c_out)
   //Close PGM image file
   _closeinpgm();
   printf( "DataInStream: Done...\n" );
+
+  c_out <: 1;
+
   return;
 }
 
@@ -210,8 +213,8 @@ void mainTimerThread(chanend c_helper_timer, chanend c_timer)
     unsigned long long int resultingTime;
     int fromController;
     int fromHelperTimerThread;
-    unsigned int period = 100000000;                      // period of 1 second
-    unsigned long long overflowSize = 4294967296LL;   // the length of one overflow
+    unsigned int period = 100000000;                    // period of 1 second
+    unsigned long long overflowSize = 4294967295 + 1;   // the length of one overflow
 
     // We initialize a timer and find the constant
     // which added to it would nullify it
@@ -244,20 +247,18 @@ void mainTimerThread(chanend c_helper_timer, chanend c_timer)
                     t :> endTime;
                     endTime += nullifier;
 
-                    if(endTime <= startTime)
-                    {
-                        numberOfOverflows++;
-                    }
-
                     resultingTime   =   overflowSize;
                     resultingTime  *=   numberOfOverflows;
-                    resultingTime  +=   endTime-startTime;
+                    if(endTime < startTime) resultingTime  -=   startTime-endTime;
+                    else resultingTime  +=   endTime-startTime;
                 }
                 else if(fromController == 3)
                 {
-                    // printf("Number of overflows  : %u\n", numberOfCycles);
-                    printf("Time passed (raw)    : %llu\n", resultingTime);
-                    printf("Time passed (seconds): %f\n", ((double)resultingTime/period));
+                    // printf("startTime : %u\n", startTime);
+                    // printf("endTime   : %u\n", endTime);
+                    // printf("Number of timer overflows  : %u\n", numberOfOverflows);
+                    printf("Time passed (raw)     : %llu\n", resultingTime);
+                    printf("Time passed (seconds) : %f\n", ((double)resultingTime/period));
                     c_timer <: 1;
                 }
                 break;
@@ -286,7 +287,7 @@ void helperTimerThread(chanend c_helper_timer)
     nullifier  =  -startTime;
     startTime +=  nullifier;
 
-    // Every second we check if the timer has overflowed
+    // Every 0.1 seconds we check if the timer has overflowed
     while(1)
     {
         t :> currentTime;
@@ -296,7 +297,7 @@ void helperTimerThread(chanend c_helper_timer)
             c_helper_timer <: 1;
         }
         startTime = currentTime;
-        delay_milliseconds(1000);
+        delay_milliseconds(100);
     }
 }
 
@@ -427,6 +428,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
       else matrix[y][x] = 0;
     }
   }
+  c_in :> int a;
   leds <: NO_LEDS;
 
   printf( "Processing...\n" );
@@ -442,6 +444,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
           case c_buttons :> buttonInput:
               if(buttonInput == 13)
               {
+                  printf("Processing stopped.\n");
                   printf( "Saving to file... \n" );
                   leds  <: BLUE_LED;
                   c_out <: 1;
@@ -454,6 +457,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                     }
                   }
                   leds <: NO_LEDS;
+                  printf("Processing restarted.\n");
               }
               break;
           case c_control :> int value:
@@ -462,8 +466,8 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   c_timer   <: 2;
                   leds      <: RED_LED;
                   printf("=================================\n");
-                  printf("Number of rounds     : %d\n", rounds);
-                  printf("Number of live cells : %d\n", countLiveCells(matrix));
+                  printf("Number of rounds      : %d\n", rounds);
+                  printf("Number of live cells  : %d\n", countLiveCells(matrix));
                   c_timer <: 3;
                   c_timer :> int a;
                   printf("=================================\n");
