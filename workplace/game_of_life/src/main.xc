@@ -116,6 +116,7 @@ void dataOutStream(char outfname[], chanend c_in)
                   //Close the PGM image
                   _closeoutpgm();
                   printf( "DataOutStream: Done...\n" );
+                  c_in <: 1;
               }
               break;
       }
@@ -456,7 +457,8 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                         else c_out <: ((uchar)(0x00));
                     }
                   }
-                  leds <: NO_LEDS;
+                  leds  <: NO_LEDS;
+                  c_out :> int a;
                   printf("Processing restarted.\n");
               }
               break;
@@ -465,12 +467,12 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               {
                   c_timer   <: 2;
                   leds      <: RED_LED;
-                  printf("=================================\n");
+                  printf("============================================\n");
                   printf("Number of rounds      : %d\n", rounds);
                   printf("Number of live cells  : %d\n", countLiveCells(matrix));
                   c_timer <: 3;
                   c_timer :> int a;
-                  printf("=================================\n");
+                  printf("============================================\n");
 
                   c_control :> value;
                   leds      <: NO_LEDS;
