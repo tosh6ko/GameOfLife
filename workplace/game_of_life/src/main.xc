@@ -535,10 +535,12 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   c_out <: 1;
                   for( int y = 0; y < IMHT; y++ )       // go through all lines
                   {
-                    for( int x = 0; x < IMWD; x++ )     // go through each pixel per line
+                    for( int x = 0; x < REALWIDTH; x++ )     // go through each pixel per line
                     {
-                        if(matrix[y][x]) c_out <: ((uchar)(0xFF));
-                        else c_out <: ((uchar)(0x00));
+                        for(int count = 0; count < 8; count++) {
+                            if( (matrix[y][x] & (1 << count)) != 0) c_out <: ((uchar)(0xFF));
+                            else c_out <: ((uchar)(0x00));
+                        }
                     }
                   }
                   c_leds  <: NO_LEDS;
