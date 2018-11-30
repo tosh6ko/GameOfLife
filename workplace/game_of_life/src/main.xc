@@ -27,7 +27,7 @@ on tile[0] : port p_sda = XS1_PORT_1F;
 #define FXOS8700EQ_OUT_Z_LSB 0x6
 
 on tile[0] : in port buttons = XS1_PORT_4E; //port to access xCore-200 buttons
-on tile[1] : out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
+on tile[0] : out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
 
 #define NO_LEDS             0X0000
 #define GREEN_SEPARATE_LED  0x0001
@@ -200,6 +200,22 @@ void buttonListener(in port b, chanend c_buttons)
         }
     }
     return;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Listens for button input and sends it to the distributor
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+void changeLEDs(out port p, chanend c_distributor)
+{
+    int pattern;
+
+    while(1)
+    {
+        c_distributor :> pattern;
+        p <: pattern;
+    }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -453,7 +469,7 @@ void workerThread(chanend c_distributor)
 // to worker threads which implement it.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer, chanend c_buttons, chanend c_workers[4])
+void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer, chanend c_buttons, chanend c_leds, chanend c_workers[4])
 {
   uchar val;
   int   buttonInput;
@@ -479,7 +495,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
       if(buttonInput == 14) break;
   }
 
-  leds <: GREEN_LED;
+  c_leds <: GREEN_LED;
   c_in <: 1;
   for( int y = 0; y < IMHT; y++ )       //go through all lines
   {
@@ -491,7 +507,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
     }
   }
   c_in :> int a;
-  leds <: NO_LEDS;
+  c_leds <: NO_LEDS;
 
   printf( "Processing...\n" );
 
@@ -508,7 +524,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               {
                   printf("Processing stopped.\n");
                   printf( "Saving to file... \n" );
-                  leds  <: BLUE_LED;
+                  c_leds  <: BLUE_LED;
                   c_out <: 1;
                   for( int y = 0; y < IMHT; y++ )       // go through all lines
                   {
@@ -518,7 +534,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                         else c_out <: ((uchar)(0x00));
                     }
                   }
-                  leds  <: NO_LEDS;
+                  c_leds  <: NO_LEDS;
                   c_out :> int a;
                   printf("Processing restarted.\n");
               }
@@ -527,7 +543,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               if(value == 1)
               {
                   c_timer   <: 2;
-                  leds      <: RED_LED;
+                  c_leds      <: RED_LED;
                   printf("============================================\n");
                   printf("Number of rounds      : %d\n", rounds);
                   printf("Number of live cells  : %d\n", countLiveCells(matrix));
@@ -536,7 +552,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   printf("============================================\n");
 
                   c_control :> value;
-                  leds      <: NO_LEDS;
+                  c_leds      <: NO_LEDS;
 
                   printf("Processing restarted.\n");
               }
@@ -609,11 +625,11 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               rounds++;
               if(greenLedState)
               {
-                  leds <: GREEN_SEPARATE_LED;
+                  c_leds <: GREEN_SEPARATE_LED;
               }
               else
               {
-                  leds <: NO_LEDS;
+                  c_leds <: NO_LEDS;
               }
               greenLedState = 1 - greenLedState;
               // delay_milliseconds(1000);
@@ -637,6 +653,7 @@ int main(void)
     chan c_timer;                       // channel for main timer
     chan c_helper_timer;                // channel for helper timer thread
     chan c_buttons;                     // channel for buttons listener thread
+    chan c_leds;                         // channel for the led changing thread
     chan c_worker[4];                   // channels for the four worker threads
 
     par
@@ -646,10 +663,11 @@ int main(void)
         on tile[0] : i2c_master(i2c, 1, p_scl, p_sda, 10);       // server thread providing orientation data
         on tile[0] : orientation(i2c[0],c_control);              // client thread reading orientation data
         on tile[0] : buttonListener(buttons, c_buttons);         // thread listening for button action
+        on tile[0] : changeLEDs(leds, c_leds);             // thread changing the leds
         on tile[0] : mainTimerThread(c_helper_timer, c_timer);   // main timer thread
         on tile[0] : helperTimerThread(c_helper_timer);          // thread checking for timer overflow
 
-        on tile[1] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_worker);  // thread to coordinate work on image
+        on tile[1] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_leds, c_worker);  // thread to coordinate work on image
         on tile[1] : workerThread(c_worker[0]);                                              // worker thread
         on tile[1] : workerThread(c_worker[1]);                                              // worker thread
         on tile[1] : workerThread(c_worker[2]);                                              // worker thread
