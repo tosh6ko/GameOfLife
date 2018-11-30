@@ -402,15 +402,17 @@ void calculateNextState(uchar matrix[IMHT/4+2][IMWD])
 // Count number of all live cells
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-int countLiveCells(char matrix[IMHT][IMWD])
+int countLiveCells(char matrix[IMHT][REALWIDTH])
 {
     int result = 0;
 
     for( int y = 0; y < IMHT; y++ )
     {
-      for( int x = 0; x < IMWD; x++ )
+      for( int x = 0; x < REALWIDTH; x++ )
       {
-        if(matrix[y][x] == 1) result++;
+        for(int count = 0; count < 8; count++) {
+            if( ( matrix[y][x] & (1 << count) ) != 0) result++;
+        }
       }
     }
 
