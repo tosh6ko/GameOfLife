@@ -250,8 +250,8 @@ void mainTimerThread(chanend c_helper_timer, chanend c_timer)
 
                     resultingTime   =   overflowSize;
                     resultingTime  *=   numberOfOverflows;
-                    if(endTime < startTime) resultingTime  -=   startTime-endTime;
-                    else resultingTime  +=   endTime-startTime;
+                    resultingTime  +=   endTime;
+                    resultingTime  -=   startTime;
                 }
                 else if(fromController == 3)
                 {
