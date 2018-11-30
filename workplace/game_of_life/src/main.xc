@@ -404,6 +404,34 @@ int countLiveCells(char matrix[IMHT][IMWD])
 /////////////////////////////////////////////////////////////////////////////////////////
 void workerThread(chanend c_distributor)
 {
+    // number of useful rows (without the duplicate on top and bottom) for each worker thread
+    int rowsPerWorker = IMHT/4;
+
+    uchar matrix[rowsPerWorker+2][IMWD];
+
+    for(int b=0;b<rowsPerWorker;b++)     // for every row that should be received from the distributor
+    {
+        for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
+        {
+            c_distributor :> matrix[b+1][c];
+        }
+    }
+
+    // receiving additional row on top to each thread
+    for(int c=0;c<IMWD;c++)   // for every cell of the upper row we must receive
+    {
+        c_distributor :> matrix[0][c];
+    }
+
+    // receiving additional row on bottom to each thread
+    for(int c=0;c<IMWD;c++)   // for every cell of the lower row we must send to every thread
+    {
+        c_distributor :> matrix[rowsPerWorker+1][c];
+    }
+
+    // Working on the matrix in mysterious ways
+
+
 
 }
 
@@ -519,7 +547,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                       }
                   }
 
-                  // sending additional row on top and bottom to each thread
+                  // sending additional row on top to each thread
                   for(int c=0;c<IMWD;c++)   // for every cell of the upper row we must send to every thread
                     {
                         par
@@ -533,7 +561,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
 
 
 
-                  // sending additional row on top and bottom to each thread
+                  // sending additional row on bottom to each thread
                   for(int c=0;c<IMWD;c++)   // for every cell of the lower row we must send to every thread
                     {
                         par
