@@ -7,8 +7,10 @@
 #include "i2c.h"
 #include <timer.h>
 
-#define  IMHT 16                  //image height (Should be divisible by 4 ( the number of worker threads ))
+#define  IMHT 16                  //image height (Should be divisible by 8)
 #define  IMWD 16                  //image width
+
+#define REALWIDTH (IMWD/8)        //width of main matrix with bitwise packing
 
 #define INFNAME     "test.pgm"       // input image path
 #define OUTFNAME    "testout.pgm"    // output image path
@@ -475,7 +477,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
   uchar val;
   int   buttonInput;
   char  greenLedState = 1;
-  char  matrix[IMHT][IMWD];         // array for the game state
+  char  matrix[IMHT][REALWIDTH];         // array for the game state
   int   rounds = 0;                 // number of passed rounds
 
   // number of useful rows (without the duplicate on top and bottom) for each worker thread
@@ -496,15 +498,19 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
       if(buttonInput == 14) break;
   }
 
+  uchar mask = 0;
   c_leds <: GREEN_LED;
   c_in <: 1;
   for( int y = 0; y < IMHT; y++ )       //go through all lines
   {
-    for( int x = 0; x < IMWD; x++ )     //go through each pixel per line
+    for( int x = 0; x < REALWIDTH; x++ )     //go through each pixel per line
     {
-      c_in :> val;
-      if(val) matrix[y][x] = 1;
-      else matrix[y][x] = 0;
+        mask = 0;
+        for(int count = 0; count < 8; count++) {
+            c_in :> val;
+            if(val) mask |= (1 << count);
+        }
+        matrix[y][x] = mask;
     }
   }
   c_in :> int a;
