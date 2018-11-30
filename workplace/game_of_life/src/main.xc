@@ -359,32 +359,34 @@ char isAlive(int neighbours, char previousState)
 // Calculate next state
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void calculateNextState(char matrix[IMHT][IMWD])
+void calculateNextState(uchar matrix[IMHT/4+2][IMWD])
 {
-    char previous[IMHT][IMWD];
+    uchar previous[IMHT/4+2][IMWD];
+    int height = IMHT/4+2;
+    int width  = IMWD;
     const int neighbourX[8] = {-1,  0, 1, -1, 1, -1,  0, 1};
     const int neighbourY[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
     int numberOfAlive;
     int nX;
     int nY;
 
-    for(int a = 0; a < IMHT; a++)
+    for(int a = 0; a < height; a++)
     {
-        for(int b = 0; b < IMWD; b++)
+        for(int b = 0; b < width; b++)
         {
             previous[a][b]=matrix[a][b];
         }
     }
 
-    for(int a = 0; a < IMHT; a++)
+    for(int a = 1; a < height-1; a++)
     {
-        for(int b = 0; b < IMWD; b++)
+        for(int b = 0; b < width; b++)
         {
             numberOfAlive = 0;
             for(int i=0;i<8;i++)
             {
-                nX = (b+neighbourX[i]+IMWD)%IMWD;
-                nY = (a+neighbourY[i]+IMHT)%IMHT;
+                nX = (b+neighbourX[i]+width)%width;
+                nY = (a+neighbourY[i]+height)%height;
                 if(previous[nY][nX]) numberOfAlive++;
             }
 
@@ -448,9 +450,8 @@ void workerThread(chanend c_distributor)
             c_distributor :> matrix[rowsPerWorker+1][c];
         }
 
-        //
-        // Working on the matrix in mysterious ways
-        //
+        // Calculating next state
+        calculateNextState(matrix);
 
         // Sending
         for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
