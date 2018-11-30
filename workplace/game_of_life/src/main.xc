@@ -7,8 +7,8 @@
 #include "i2c.h"
 #include <timer.h>
 
-#define  IMHT 16                  //image height
-#define  IMWD 16                  //image width
+#define  IMHT 512                  //image height
+#define  IMWD 512                  //image width
 
 typedef unsigned char uchar;      //using uchar as shorthand
 
