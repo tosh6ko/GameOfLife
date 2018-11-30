@@ -418,8 +418,11 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
   uchar val;
   int   buttonInput;
   char  greenLedState = 1;
-  char  matrix[IMHT][IMWD];      // array for the game state
-  int   rounds = 0;               // number of passed rounds
+  char  matrix[IMHT][IMWD];         // array for the game state
+  int   rounds = 0;                 // number of passed rounds
+
+  // number of useful rows (without the duplicate on top and bottom) for each worker thread
+  int rowsPerWorker = IMHT/4;
 
   //Starting up and wait for pressing of SW1 button
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
@@ -497,7 +500,53 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
           default:
 
               // Sending parts of the matrix to each thread
-              calculateNextState(matrix);
+              //calculateNextState(matrix);
+
+              // Sending to workers
+              for(int a=0;a<4;a++)              // for every worker
+              {
+                  for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
+                  {
+                      for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
+                      {
+                          par
+                          {
+                              c_workers[0] <: matrix[b][c];
+                              c_workers[1] <: matrix[b+rowsPerWorker][c];
+                              c_workers[2] <: matrix[b+2*rowsPerWorker][c];
+                              c_workers[3] <: matrix[b+3*rowsPerWorker][c];
+                          }
+                      }
+                  }
+
+                  // sending additional row on top and bottom to each thread
+                  for(int c=0;c<IMWD;c++)   // for every cell of the upper row we must send to every thread
+                    {
+                        par
+                        {
+                            c_workers[0] <: matrix[IMHT-1][c];
+                            c_workers[1] <: matrix[rowsPerWorker-1][c];
+                            c_workers[2] <: matrix[2*rowsPerWorker-1][c];
+                            c_workers[3] <: matrix[3*rowsPerWorker-1][c];
+                        }
+                    }
+
+
+
+                  // sending additional row on top and bottom to each thread
+                  for(int c=0;c<IMWD;c++)   // for every cell of the lower row we must send to every thread
+                    {
+                        par
+                        {
+                            c_workers[0] <: matrix[rowsPerWorker][c];
+                            c_workers[1] <: matrix[2*rowsPerWorker][c];
+                            c_workers[2] <: matrix[3*rowsPerWorker][c];
+                            c_workers[3] <: matrix[0][c];
+                        }
+                    }
+              }
+
+              // Receiving from workers
 
 
               rounds++;
