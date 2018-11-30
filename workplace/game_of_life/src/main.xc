@@ -547,7 +547,22 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               }
 
               // Receiving from workers
-
+              for(int a=0;a<4;a++)
+              {
+                  for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
+                    {
+                        for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
+                        {
+                            par
+                            {
+                                c_workers[0] :> matrix[b][c];
+                                c_workers[1] :> matrix[b+rowsPerWorker][c];
+                                c_workers[2] :> matrix[b+2*rowsPerWorker][c];
+                                c_workers[3] :> matrix[b+3*rowsPerWorker][c];
+                            }
+                        }
+                    }
+              }
 
               rounds++;
               if(greenLedState)
