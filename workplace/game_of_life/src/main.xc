@@ -10,6 +10,9 @@
 #define  IMHT 16                  //image height (Should be divisible by 4 ( the number of worker threads ))
 #define  IMWD 16                  //image width
 
+#define INFNAME     "test.pgm"       // input image path
+#define OUTFNAME    "testout.pgm"    // output image path
+
 typedef unsigned char uchar;      //using uchar as shorthand
 
 on tile[0] : port p_scl = XS1_PORT_1E;         //interface ports to orientation
@@ -34,9 +37,6 @@ on tile[0] : out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
 #define GREEN_LED           0x0004
 #define BLUE_LED            0x0002
 #define RED_LED             0x0008
-
-#define INFNAME     "test.pgm"       // input image path
-#define OUTFNAME    "testout.pgm"    // output image path
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -167,13 +167,13 @@ void orientation( client interface i2c_master_if i2c, chanend toDist)
         int x = read_acceleration(i2c, FXOS8700EQ_OUT_X_MSB);
 
         // if the board is now tilted, send to the distributor 1
-        if (!tilted && (x>30 || x<-30))
+        if (!tilted && (x>40 || x<-40))
         {
             toDist <: 1;
             tilted = 1 - tilted;
         }
         // if the board is no longer tilted, send to the distributor 0
-        if(tilted && (x <= 30 && x>= -30))
+        if(tilted && (x <= 20 && x>= -20))
         {
             toDist <: 0;
             tilted = 1 - tilted;
