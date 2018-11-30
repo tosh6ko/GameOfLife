@@ -7,13 +7,13 @@
 #include "i2c.h"
 #include <timer.h>
 
-#define  IMHT 16                  //image height
+#define  IMHT 16                  //image height (Should be divisible by 4 ( the number of worker threads ))
 #define  IMWD 16                  //image width
 
 typedef unsigned char uchar;      //using uchar as shorthand
 
-port p_scl = XS1_PORT_1E;         //interface ports to orientation
-port p_sda = XS1_PORT_1F;
+on tile[0] : port p_scl = XS1_PORT_1E;         //interface ports to orientation
+on tile[0] : port p_sda = XS1_PORT_1F;
 
 #define FXOS8700EQ_I2C_ADDR 0x1E  //register addresses for orientation
 #define FXOS8700EQ_XYZ_DATA_CFG_REG 0x0E
@@ -26,14 +26,17 @@ port p_sda = XS1_PORT_1F;
 #define FXOS8700EQ_OUT_Z_MSB 0x5
 #define FXOS8700EQ_OUT_Z_LSB 0x6
 
-in port buttons = XS1_PORT_4E; //port to access xCore-200 buttons
-out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
+on tile[0] : in port buttons = XS1_PORT_4E; //port to access xCore-200 buttons
+on tile[1] : out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
 
 #define NO_LEDS             0X0000
 #define GREEN_SEPARATE_LED  0x0001
 #define GREEN_LED           0x0004
 #define BLUE_LED            0x0002
 #define RED_LED             0x0008
+
+#define INFNAME     "test.pgm"       // input image path
+#define OUTFNAME    "testout.pgm"    // output image path
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -396,11 +399,21 @@ int countLiveCells(char matrix[IMHT][IMWD])
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
+// Worker thread working on part of the game state
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+void workerThread(chanend c_distributor)
+{
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
 // Function, which implements game of life by farming out parts of the gamestate
 // to worker threads which implement it.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer, chanend c_buttons)
+void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer, chanend c_buttons, chanend c_workers[4])
 {
   uchar val;
   int   buttonInput;
@@ -482,7 +495,11 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               break;
 
           default:
+
+              // Sending parts of the matrix to each thread
               calculateNextState(matrix);
+
+
               rounds++;
               if(greenLedState)
               {
@@ -508,26 +525,29 @@ int main(void)
 {
     i2c_master_if i2c[1];               // interface to orientation
 
-    char infname[] = "test.pgm";        // input image path
-    char outfname[] = "testout.pgm";    // output image path
     chan c_inIO;                        // channel for input file stream
     chan c_outIO;                       // channel for output file stream
     chan c_control;                     // channel for accelerometer
     chan c_timer;                       // channel for main timer
     chan c_helper_timer;                // channel for helper timer thread
     chan c_buttons;                     // channel for buttons listener thread
+    chan c_worker[4];                   // channels for the four worker threads
 
     par
     {
-        dataInStream(infname, c_inIO);              // thread to read in a PGM image
-        dataOutStream(outfname, c_outIO);           // thread to write out a PGM image
-        i2c_master(i2c, 1, p_scl, p_sda, 10);       // server thread providing orientation data
-        orientation(i2c[0],c_control);              // client thread reading orientation data
-        buttonListener(buttons, c_buttons);         // thread listening for button action
-        mainTimerThread(c_helper_timer, c_timer);   // main timer thread
-        helperTimerThread(c_helper_timer);          // thread checking for timer overflow
+        on tile[0] : dataInStream(INFNAME, c_inIO);              // thread to read in a PGM image
+        on tile[0] : dataOutStream(OUTFNAME, c_outIO);           // thread to write out a PGM image
+        on tile[0] : i2c_master(i2c, 1, p_scl, p_sda, 10);       // server thread providing orientation data
+        on tile[0] : orientation(i2c[0],c_control);              // client thread reading orientation data
+        on tile[0] : buttonListener(buttons, c_buttons);         // thread listening for button action
+        on tile[0] : mainTimerThread(c_helper_timer, c_timer);   // main timer thread
+        on tile[0] : helperTimerThread(c_helper_timer);          // thread checking for timer overflow
 
-        distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons);    // thread to coordinate work on image
+        on tile[1] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_worker);  // thread to coordinate work on image
+        on tile[1] : workerThread(c_worker[0]);                                              // worker thread
+        on tile[1] : workerThread(c_worker[1]);                                              // worker thread
+        on tile[1] : workerThread(c_worker[2]);                                              // worker thread
+        on tile[1] : workerThread(c_worker[3]);                                              // worker thread
       }
 
       return 0;
