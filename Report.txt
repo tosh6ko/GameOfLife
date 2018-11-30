@@ -42,3 +42,49 @@ Time passed (seconds) : 361.125194
 
 512x512: MEM
 600x600: MEM
+
+
+2. Testing of 4 worker thread with characters (not bitwise)
+
+16x16:
+============================================
+Number of rounds      : 26993
+Number of live cells  : 5
+Time passed (raw)     : 2286063982
+Time passed (seconds) : 22.860640
+============================================
+
+32x32:
+============================================
+Number of rounds      : 6844
+Number of live cells  : 5
+Time passed (raw)     : 2215853501
+Time passed (seconds) : 22.158535
+============================================
+
+64x64:
+============================================
+Number of rounds      : 1574
+Number of live cells  : 5
+Time passed (raw)     : 2009023594
+Time passed (seconds) : 20.090236
+============================================
+
+128x128:
+============================================
+Number of rounds      : 951
+Number of live cells  : 5
+Time passed (raw)     : 4808290798
+Time passed (seconds) : 48.082908
+============================================
+
+256x256:
+============================================
+Number of rounds      : 557
+Number of live cells  : 5
+Time passed (raw)     : 11139526868
+Time passed (seconds) : 111.395269
+============================================
+
+512x512: MEM
+600x600: MEM
