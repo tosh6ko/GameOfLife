@@ -34,10 +34,11 @@ Time passed (seconds) : 66.095542
 
 256x256:
 ============================================
-Number of rounds      : 693
-Number of live cells  : 5
-Time passed (raw)     : 36112519381
-Time passed (seconds) : 361.125194
+Number of rounds      	: 693
+Number of live cells  	: 5
+Time passed (raw)     	: 36112519381
+Time passed (seconds) 	: 361.125194
+Time per round (seconds): 0.521104
 ============================================
 
 512x512: MEM
@@ -84,6 +85,7 @@ Number of rounds      : 557
 Number of live cells  : 5
 Time passed (raw)     : 11139526868
 Time passed (seconds) : 111.395269
+Time per round (seconds) : 0.199992
 ============================================
 
 512x512: MEM
