@@ -409,42 +409,44 @@ void workerThread(chanend c_distributor)
 
     uchar matrix[IMHT/4+2][IMWD];
 
-    // Receiving
-    for(int b=0;b<rowsPerWorker;b++)     // for every row that should be received from the distributor
-    {
-        for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
+    while(1) {
+        // Receiving
+        for(int b=0;b<rowsPerWorker;b++)     // for every row that should be received from the distributor
         {
-            c_distributor :> matrix[b+1][c];
+            for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
+            {
+                c_distributor :> matrix[b+1][c];
+            }
         }
-    }
 
-    // receiving additional row on top to each thread
-    for(int c=0;c<IMWD;c++)   // for every cell of the upper row we must receive
-    {
-        c_distributor :> matrix[0][c];
-    }
-
-    // receiving additional row on bottom to each thread
-    for(int c=0;c<IMWD;c++)   // for every cell of the lower row we must send to every thread
-    {
-        c_distributor :> matrix[rowsPerWorker+1][c];
-    }
-
-    printf("Worker finished receiving\n");
-
-    //
-    // Working on the matrix in mysterious ways
-    //
-
-    // Sending
-    for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
-    {
-        for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
+        // receiving additional row on top to each thread
+        for(int c=0;c<IMWD;c++)   // for every cell of the upper row we must receive
         {
-            c_distributor <: matrix[b+1][c];
+            c_distributor :> matrix[0][c];
         }
+
+        // receiving additional row on bottom to each thread
+        for(int c=0;c<IMWD;c++)   // for every cell of the lower row we must send to every thread
+        {
+            c_distributor :> matrix[rowsPerWorker+1][c];
+        }
+
+        printf("Worker finished receiving\n");
+
+        //
+        // Working on the matrix in mysterious ways
+        //
+
+        // Sending
+        for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
+        {
+            for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
+            {
+                c_distributor <: matrix[b+1][c];
+            }
+        }
+        printf("Worker finished sending\n");
     }
-    printf("Worker finished sending\n");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -543,7 +545,6 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               break;
 
           default:
-
               // Sending parts of the matrix to each thread
               //calculateNextState(matrix);
 
@@ -626,6 +627,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   leds <: NO_LEDS;
               }
               greenLedState = 1 - greenLedState;
+              printf("Processing round completed\n");
               // delay_milliseconds(1000);
               break;
       }
