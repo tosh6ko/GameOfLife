@@ -409,7 +409,8 @@ void workerThread(chanend c_distributor)
 
     uchar matrix[IMHT/4+2][IMWD];
 
-    while(1) {
+    while(1)
+    {
         // Receiving
         for(int b=0;b<rowsPerWorker;b++)     // for every row that should be received from the distributor
         {
@@ -431,8 +432,6 @@ void workerThread(chanend c_distributor)
             c_distributor :> matrix[rowsPerWorker+1][c];
         }
 
-        printf("Worker finished receiving\n");
-
         //
         // Working on the matrix in mysterious ways
         //
@@ -445,7 +444,6 @@ void workerThread(chanend c_distributor)
                 c_distributor <: matrix[b+1][c];
             }
         }
-        printf("Worker finished sending\n");
     }
 }
 
@@ -562,7 +560,6 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                       }
                   }
               }
-              printf("Sent real rows\n");
 
               // sending additional row on top to each thread
               for(int c=0;c<IMWD;c++)   // for every cell of the upper row we must send to every thread
@@ -575,7 +572,6 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                       c_workers[3] <: matrix[3*rowsPerWorker-1][c];
                   }
               }
-              printf("Sent top additional row\n");
 
 
               // sending additional row on bottom to each thread
@@ -589,14 +585,10 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                       c_workers[3] <: matrix[0][c];
                   }
               }
-              printf("Sent bottom additional row\n");
-              printf("Sending completed\n");
 
               // Receiving from workers
-              printf("Rows per worker: %d\n", rowsPerWorker);
               for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
               {
-                  printf("Starting: b == %d\n", b);
                   for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
                   {
                       par
@@ -612,10 +604,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                       matrix[b+2*rowsPerWorker][c]  = fromWorker3;
                       matrix[b+3*rowsPerWorker][c]  = fromWorker4;
                   }
-                  printf("Distributor received 4 rows\n");
-                  printf("Ending: b == %d\n", b);
               }
-              printf("Receiving completed\n");
 
               rounds++;
               if(greenLedState)
@@ -627,7 +616,6 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   leds <: NO_LEDS;
               }
               greenLedState = 1 - greenLedState;
-              printf("Processing round completed\n");
               // delay_milliseconds(1000);
               break;
       }
