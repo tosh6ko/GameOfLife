@@ -430,6 +430,8 @@ void workerThread(chanend c_distributor)
         c_distributor :> matrix[rowsPerWorker+1][c];
     }
 
+    printf("Worker finished receiving\n");
+
     //
     // Working on the matrix in mysterious ways
     //
@@ -439,9 +441,10 @@ void workerThread(chanend c_distributor)
     {
         for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
         {
-            c_distributor <: matrix[rowsPerWorker+1][c];
+            c_distributor <: matrix[b+1][c];
         }
     }
+    printf("Worker finished sending\n");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -545,71 +548,73 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               //calculateNextState(matrix);
 
               // Sending to workers
-              for(int a=0;a<4;a++)              // for every worker
+              for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
               {
-                  for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
-                  {
-                      for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
-                      {
-                          par
-                          {
-                              c_workers[0] <: matrix[b][c];
-                              c_workers[1] <: matrix[b+rowsPerWorker][c];
-                              c_workers[2] <: matrix[b+2*rowsPerWorker][c];
-                              c_workers[3] <: matrix[b+3*rowsPerWorker][c];
-                          }
-                      }
-                  }
-
-                  // sending additional row on top to each thread
-                  for(int c=0;c<IMWD;c++)   // for every cell of the upper row we must send to every thread
+                  for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
                   {
                       par
                       {
-                          c_workers[0] <: matrix[IMHT-1][c];
-                          c_workers[1] <: matrix[rowsPerWorker-1][c];
-                          c_workers[2] <: matrix[2*rowsPerWorker-1][c];
-                          c_workers[3] <: matrix[3*rowsPerWorker-1][c];
-                      }
-                  }
-
-
-
-                  // sending additional row on bottom to each thread
-                  for(int c=0;c<IMWD;c++)   // for every cell of the lower row we must send to every thread
-                  {
-                      par
-                      {
-                          c_workers[0] <: matrix[rowsPerWorker][c];
-                          c_workers[1] <: matrix[2*rowsPerWorker][c];
-                          c_workers[2] <: matrix[3*rowsPerWorker][c];
-                          c_workers[3] <: matrix[0][c];
+                          c_workers[0] <: matrix[b][c];
+                          c_workers[1] <: matrix[b+rowsPerWorker][c];
+                          c_workers[2] <: matrix[b+2*rowsPerWorker][c];
+                          c_workers[3] <: matrix[b+3*rowsPerWorker][c];
                       }
                   }
               }
+              printf("Sent real rows\n");
+
+              // sending additional row on top to each thread
+              for(int c=0;c<IMWD;c++)   // for every cell of the upper row we must send to every thread
+              {
+                  par
+                  {
+                      c_workers[0] <: matrix[IMHT-1][c];
+                      c_workers[1] <: matrix[rowsPerWorker-1][c];
+                      c_workers[2] <: matrix[2*rowsPerWorker-1][c];
+                      c_workers[3] <: matrix[3*rowsPerWorker-1][c];
+                  }
+              }
+              printf("Sent top additional row\n");
+
+
+              // sending additional row on bottom to each thread
+              for(int c=0;c<IMWD;c++)   // for every cell of the lower row we must send to every thread
+              {
+                  par
+                  {
+                      c_workers[0] <: matrix[rowsPerWorker][c];
+                      c_workers[1] <: matrix[2*rowsPerWorker][c];
+                      c_workers[2] <: matrix[3*rowsPerWorker][c];
+                      c_workers[3] <: matrix[0][c];
+                  }
+              }
+              printf("Sent bottom additional row\n");
+              printf("Sending completed\n");
 
               // Receiving from workers
-              for(int a=0;a<4;a++)
+              printf("Rows per worker: %d\n", rowsPerWorker);
+              for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
               {
-                  for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
+                  printf("Starting: b == %d\n", b);
+                  for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
                   {
-                      for(int c=0;c<IMWD;c++)   // for every cell of every row we have to send every worker
+                      par
                       {
-                          par
-                          {
-                              c_workers[0] :> fromWorker1;
-                              c_workers[1] :> fromWorker2;
-                              c_workers[2] :> fromWorker3;
-                              c_workers[3] :> fromWorker4;
-                          }
-
-                          matrix[b][c]                  = fromWorker1;
-                          matrix[b+rowsPerWorker][c]    = fromWorker2;
-                          matrix[b+2*rowsPerWorker][c]  = fromWorker3;
-                          matrix[b+3*rowsPerWorker][c]  = fromWorker4;
+                          c_workers[0] :> fromWorker1;
+                          c_workers[1] :> fromWorker2;
+                          c_workers[2] :> fromWorker3;
+                          c_workers[3] :> fromWorker4;
                       }
+
+                      matrix[b][c]                  = fromWorker1;
+                      matrix[b+rowsPerWorker][c]    = fromWorker2;
+                      matrix[b+2*rowsPerWorker][c]  = fromWorker3;
+                      matrix[b+3*rowsPerWorker][c]  = fromWorker4;
                   }
+                  printf("Distributor received 4 rows\n");
+                  printf("Ending: b == %d\n", b);
               }
+              printf("Receiving completed\n");
 
               rounds++;
               if(greenLedState)
