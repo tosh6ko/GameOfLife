@@ -4,5 +4,9 @@
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !!!!! Use binary numbers ( 0b010101011110 ) in order to make this easy to debug and explain
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+1. Change comments for size to be div by 4 and div by 8
 1. Check the speed and do speed tests
+1. Make the parallel sending and receiving from worker threads to be on the outermost cycle
+1. Check the speed and do speed tests
+1. Make google spreadsheet to make the report. Make it only accessible with uob account
 1. Put in the report some info about the timer threadssssss
