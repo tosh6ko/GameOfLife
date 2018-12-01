@@ -335,7 +335,11 @@ void printMatrix(char matrix[IMHT][IMWD])
     {
         for(int b=0;b<IMWD;b++)
         {
-            printf("%c ", (matrix[b][a]+'0'));
+            for(int count = 0; count < 8; count++) {
+                int toDisplay = (matrix[b][a] & (1 << count));
+                if(toDisplay != 0) printf("1 ");
+                else printf("0 ");
+            }
         }
         printf("\n");
     }
