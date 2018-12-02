@@ -1,5 +1,3 @@
-1. Make a swarm of one master thread and four worker
-1. Time test extensively
 1. Split the char in 8 cells
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !!!!! Use binary numbers ( 0b010101011110 ) in order to make this easy to debug and explain
