@@ -586,25 +586,29 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               // Sending to workers
               par (int worker = 0; worker < 4; worker ++)
               {
-                  for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
                   {
-                      for(int c=0;c<REALWIDTH;c++)   // for every cell of every row we have to send every worker
+                      for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
                       {
-                          c_workers[worker] <: matrix[b+worker*rowsPerWorker][c];
+                          for(int c=0;c<REALWIDTH;c++)   // for every cell of every row we have to send every worker
+                          {
+                              c_workers[worker] <: matrix[b+worker*rowsPerWorker][c];
+                          }
                       }
-                  }
 
-                  // sending additional row on top to each thread
-                  for(int c=0;c<REALWIDTH;c++)   // for every cell of the upper row we must send to every thread
-                  {
-                      c_workers[worker] <: matrix[((worker+4)%4)*rowsPerWorker-1][c];
-                  }
+                      // sending additional row on top to each thread
+                      int index = worker;
+                      if(worker == 0) index = 4;
+                      for(int c=0;c<REALWIDTH;c++)   // for every cell of the upper row we must send to every thread
+                      {
+                          c_workers[worker] <: matrix[(index*rowsPerWorker-1)][c];
+                      }
 
 
-                  // sending additional row on bottom to each thread
-                  for(int c=0;c<REALWIDTH;c++)   // for every cell of the lower row we must send to every thread
-                  {
-                      c_workers[worker] <: matrix[((worker+1)%4)*rowsPerWorker][c];
+                      // sending additional row on bottom to each thread
+                      for(int c=0;c<REALWIDTH;c++)   // for every cell of the lower row we must send to every thread
+                      {
+                          c_workers[worker] <: matrix[((worker+1)%4)*rowsPerWorker][c];
+                      }
                   }
               }
 
