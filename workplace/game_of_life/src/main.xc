@@ -551,15 +551,15 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
   {
       for( int y = 0; y < rowsPerWorker; y++ )       //for every line for every worker
       {
-        for( int x = 0; x < REALWIDTH; x++ )     //go through each pixel per line
-        {
-            mask = 0;
-            for(int count = 0; count < 8; count++) {
-                c_in :> val;
-                if(val) mask |= (1 << count);
-            }
-            matrix[worker][y][x] = mask;
-        }
+          for( int x = 0; x < REALWIDTH; x++ )     //go through each pixel per line
+          {
+              mask = 0;
+              for(int count = 0; count < 8; count++) {
+                  c_in :> val;
+                  if(val) mask |= (1 << count);
+              }
+              matrix[worker][y][x] = mask;
+          }
       }
   }
 
@@ -576,15 +576,13 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
   // Sending matrix to worker threads
   for (int worker = 0; worker < WORKERS; worker ++)
   {
-      {
-          c_workers[worker] <: 1;   // sending information that the whole matrix will be sent, not the additional rows
+      c_workers[worker] <: 1;   // sending information that the whole matrix will be sent, not the additional rows
 
-          for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
+      for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
+      {
+          for(int c=0;c<REALWIDTH;c++)   // for every cell of every row we have to send every worker
           {
-              for(int c=0;c<REALWIDTH;c++)   // for every cell of every row we have to send every worker
-              {
-                  c_workers[worker] <: matrix[worker][b][c];
-              }
+              c_workers[worker] <: matrix[worker][b][c];
           }
       }
   }
@@ -603,16 +601,14 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
 
                   for (int worker = 0; worker < WORKERS; worker ++)
                   {
-                      {
-                          c_workers[worker] <: 3;       // sending a request to send everything
+                      c_workers[worker] <: 3;       // sending a request to send everything
 
-                          for(int b=0;b<rowsPerWorker;b++)     // for every row that we must receive from the worker
+                      for(int b=0;b<rowsPerWorker;b++)     // for every row that we must receive from the worker
+                      {
                           {
+                              for(int c=0;c<REALWIDTH;c++)   // for every cell that we must receive from the worker
                               {
-                                  for(int c=0;c<REALWIDTH;c++)   // for every cell that we must receive from the worker
-                                  {
-                                      c_workers[worker] :> matrix[worker][b][c];
-                                  }
+                                  c_workers[worker] :> matrix[worker][b][c];
                               }
                           }
                       }
@@ -623,13 +619,13 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   {
                       for( int y = 0; y < rowsPerWorker; y++ )       // go through all lines
                       {
-                        for( int x = 0; x < REALWIDTH; x++ )     // go through each pixel per line
-                        {
-                            for(int count = 0; count < 8; count++) {
-                                if( (matrix[worker][y][x] & (1 << count)) != 0) c_out <: ((uchar)(0xFF));
-                                else c_out <: ((uchar)(0x00));
-                            }
-                        }
+                          for( int x = 0; x < REALWIDTH; x++ )     // go through each pixel per line
+                          {
+                              for(int count = 0; count < 8; count++) {
+                                  if( (matrix[worker][y][x] & (1 << count)) != 0) c_out <: ((uchar)(0xFF));
+                                  else c_out <: ((uchar)(0x00));
+                              }
+                          }
                       }
                   }
 
@@ -663,39 +659,35 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               // Sending to workers
               for (int worker = 0; worker < WORKERS; worker ++)
               {
+                  c_workers[worker] <: 2;       // sending information that additional rows will be sent
+
+                  // sending additional row on top to each thread
+                  for(int c=0;c<REALWIDTH;c++)   // for every cell of the upper row we must send to every thread
                   {
-                      c_workers[worker] <: 2;       // sending information that additional rows will be sent
-
-                      // sending additional row on top to each thread
-                      for(int c=0;c<REALWIDTH;c++)   // for every cell of the upper row we must send to every thread
-                      {
-                          c_workers[worker] <: matrix[(worker+(WORKERS-1))%WORKERS][rowsPerWorker-1][c];
-                      }
+                      c_workers[worker] <: matrix[(worker+(WORKERS-1))%WORKERS][rowsPerWorker-1][c];
+                  }
 
 
-                      // sending additional row on bottom to each thread
-                      for(int c=0;c<REALWIDTH;c++)   // for every cell of the lower row we must send to every thread
-                      {
-                          c_workers[worker] <: matrix[(worker+1)%WORKERS][0][c];
-                      }
+                  // sending additional row on bottom to each thread
+                  for(int c=0;c<REALWIDTH;c++)   // for every cell of the lower row we must send to every thread
+                  {
+                      c_workers[worker] <: matrix[(worker+1)%WORKERS][0][c];
                   }
               }
 
               // Receiving from workers
               for (int worker = 0; worker < WORKERS; worker ++) // for every worker
               {
+                  // receiving additional row on top to each thread
+                  for(int c=0;c<REALWIDTH;c++)   // for every cell of the upper row we must send to every thread
                   {
-                      // receiving additional row on top to each thread
-                      for(int c=0;c<REALWIDTH;c++)   // for every cell of the upper row we must send to every thread
-                      {
-                          c_workers[worker] :> matrix[worker][0][c];
-                      }
+                      c_workers[worker] :> matrix[worker][0][c];
+                  }
 
-                      // receiving additional row on bottom to each thread
-                      for(int c=0;c<REALWIDTH;c++)   // for every cell of the lower row we must send to every thread
-                      {
-                          c_workers[worker] :> matrix[worker][rowsPerWorker-1][c];
-                      }
+                  // receiving additional row on bottom to each thread
+                  for(int c=0;c<REALWIDTH;c++)   // for every cell of the lower row we must send to every thread
+                  {
+                      c_workers[worker] :> matrix[worker][rowsPerWorker-1][c];
                   }
               }
 
