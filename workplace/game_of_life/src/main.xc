@@ -328,16 +328,16 @@ void helperTimerThread(chanend c_helper_timer)
 // Print matrix to the terminal
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void printMatrix(char matrix[IMHT][IMWD])
+void printMatrix(char matrix[IMHT][REALWIDTH])
 {
     printf("Matrix console printing starting.\n");
     for(int a=0;a<IMHT;a++)
     {
-        for(int b=0;b<IMWD;b++)
+        for(int b=0;b<REALWIDTH;b++)
         {
             for(int count = 0; count < 8; count++) {
-                int toDisplay = (matrix[b][a] & (1 << count));
-                if(toDisplay != 0) printf("1 ");
+                int bitValue = (matrix[b][a] & (1 << count));
+                if(bitValue != 0) printf("1 ");
                 else printf("0 ");
             }
         }
