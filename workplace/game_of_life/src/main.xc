@@ -7,8 +7,8 @@
 #include "i2c.h"
 #include <timer.h>
 
-#define  IMHT 16                  //image height (Should be divisible by 8)
-#define  IMWD 16                  //image width
+#define  IMHT 16                  //image height (Should be divisible by 4 (number of worker threads))
+#define  IMWD 16                  //image width  (Should be divisible by 8 (number of bits in uchar))
 
 #define REALWIDTH (IMWD/8)        //width of main matrix with bitwise packing
 
