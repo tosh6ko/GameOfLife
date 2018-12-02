@@ -176,7 +176,6 @@ Number of rounds      : 255
 Number of live cells  : 5
 Time passed (raw)     : 61848591068
 Time passed (seconds) : 618.485911
-Time per round: 2,4235 (approximately)
 ============================================
 
 
@@ -202,5 +201,28 @@ Number of rounds      : 604
 Number of live cells  : 5
 Time passed (raw)     : 142740130380
 Time passed (seconds) : 1427.401304
-Time per round: 2.362 (approximately)
+============================================
+
+4. 8 threads
+
+16x16:
+
+32x32:
+
+64x64:
+
+128x128:
+
+256x256:
+
+512x512:
+
+600x600:
+
+1024x1024:
+============================================
+Number of rounds      : 1220
+Number of live cells  : 5
+Time passed (raw)     : 164282313435
+Time passed (seconds) : 1642.823134
 ============================================
