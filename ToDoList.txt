@@ -2,5 +2,9 @@
 1. Check the speed and do speed tests
 1. Make the sending to be only of the additional rows
 1. Check the speed and do speed tests
+1. Use 8 threads
+1. Check the speed and do speed tests
+1. Test asynchronous channels
+1. Check the speed and do speed tests
 1. Make google spreadsheet to make the report. Make it only accessible with uob account
 1. Put in the report some info about the timer threadssssss
