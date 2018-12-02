@@ -503,11 +503,6 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
   printf( "Waiting for press of SW1 button...\n" );
 
-  uchar fromWorker1;
-  uchar fromWorker2;
-  uchar fromWorker3;
-  uchar fromWorker4;
-
   while(1)
   {
       c_buttons :> buttonInput;
@@ -623,24 +618,19 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               }
 
               // Receiving from workers
-              for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
+              par (int worker = 0; worker < 4; worker ++) // for every worker
               {
-                  for(int c=0;c<REALWIDTH;c++)   // for every cell of every row we have to send every worker
+                  for(int b=0;b<rowsPerWorker;b++)     // for every row that we must receive from the worker
                   {
-                      par
                       {
-                          c_workers[0] :> fromWorker1;
-                          c_workers[1] :> fromWorker2;
-                          c_workers[2] :> fromWorker3;
-                          c_workers[3] :> fromWorker4;
+                          for(int c=0;c<REALWIDTH;c++)   // for every cell that we must receive from the worker
+                          {
+                              c_workers[worker] :> matrix[worker][b][c];
+                          }
                       }
-
-                      matrix[0][b][c] = fromWorker1;
-                      matrix[1][b][c] = fromWorker2;
-                      matrix[2][b][c] = fromWorker3;
-                      matrix[3][b][c] = fromWorker4;
                   }
               }
+
 
               rounds++;
               if(greenLedState)
