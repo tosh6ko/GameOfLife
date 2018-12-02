@@ -91,7 +91,7 @@ Time per round (seconds) : 0.199992
 512x512: MEM
 600x600: MEM
 
-3. Testing of 4 worker thread with bit packing
+3. Testing of 4 worker thread with bit packing (only one tile)
 
 16x16:
 ============================================
@@ -148,3 +148,23 @@ Number of live cells  : 5
 Time passed (raw)     : 27602838661
 Time passed (seconds) : 276.028387
 ============================================
+
+1024x1024:
+MEM
+
+
+3. Testing of 4 worker thread with bit packing
+
+16x16:
+
+32x32:
+
+64x64:
+
+128x128:
+
+256x256:
+
+512x512:
+
+600x600:

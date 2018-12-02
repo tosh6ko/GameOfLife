@@ -7,12 +7,12 @@
 #include "i2c.h"
 #include <timer.h>
 
-#define  IMHT 600                  //image height (Should be divisible by 4 (number of worker threads))
-#define  IMWD 600                  //image width  (Should be divisible by 8 (number of bits in uchar))
+#define  IMHT 16                  //image height (Should be divisible by 4 (number of worker threads))
+#define  IMWD 16                  //image width  (Should be divisible by 8 (number of bits in uchar))
 
 #define REALWIDTH (IMWD/8)        //width of main matrix with bitwise packing
 
-#define INFNAME     "test600.pgm"       // input image path
+#define INFNAME     "test16.pgm"       // input image path
 #define OUTFNAME    "testout.pgm"    // output image path
 
 typedef unsigned char uchar;      //using uchar as shorthand
@@ -679,19 +679,20 @@ int main(void)
 
     par
     {
-        on tile[0] : dataInStream(INFNAME, c_inIO);              // thread to read in a PGM image
+
         on tile[0] : dataOutStream(OUTFNAME, c_outIO);           // thread to write out a PGM image
         on tile[0] : i2c_master(i2c, 1, p_scl, p_sda, 10);       // server thread providing orientation data
         on tile[0] : orientation(i2c[0],c_control);              // client thread reading orientation data
         on tile[0] : buttonListener(buttons, c_buttons);         // thread listening for button action
         on tile[0] : changeLEDs(leds, c_leds);             // thread changing the leds
-        on tile[0] : mainTimerThread(c_helper_timer, c_timer);   // main timer thread
-        on tile[0] : helperTimerThread(c_helper_timer);          // thread checking for timer overflow
+        on tile[0] : workerThread(c_worker[0]);                                              // worker thread
+        on tile[0] : workerThread(c_worker[1]);                                              // worker thread
+        on tile[0] : workerThread(c_worker[2]);                                              // worker thread
 
+        on tile[1] : dataInStream(INFNAME, c_inIO);              // thread to read in a PGM image
+        on tile[1] : mainTimerThread(c_helper_timer, c_timer);   // main timer thread
+        on tile[1] : helperTimerThread(c_helper_timer);          // thread checking for timer overflow
         on tile[1] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_leds, c_worker);  // thread to coordinate work on image
-        on tile[1] : workerThread(c_worker[0]);                                              // worker thread
-        on tile[1] : workerThread(c_worker[1]);                                              // worker thread
-        on tile[1] : workerThread(c_worker[2]);                                              // worker thread
         on tile[1] : workerThread(c_worker[3]);                                              // worker thread
       }
 
