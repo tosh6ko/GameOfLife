@@ -328,21 +328,25 @@ void helperTimerThread(chanend c_helper_timer)
 // Print matrix to the terminal
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void printMatrix(char matrix[IMHT][REALWIDTH])
+void printMatrix(char matrix[4][IMHT/4][REALWIDTH])
 {
     printf("Matrix console printing starting.\n");
-    for(int a=0;a<IMHT;a++)
+    for(int worker = 0; worker < 4; worker ++)
     {
-        for(int b=0;b<REALWIDTH;b++)
+        for(int a=0;a<IMHT/4;a++)
         {
-            for(int count = 0; count < 8; count++) {
-                int bitValue = (matrix[a][b] & (1 << count));
-                if(bitValue != 0) printf("1 ");
-                else printf("0 ");
+            for(int b=0;b<REALWIDTH;b++)
+            {
+                for(int count = 0; count < 8; count++) {
+                    int bitValue = (matrix[worker][a][b] & (1 << count));
+                    if(bitValue != 0) printf("1 ");
+                    else printf("0 ");
+                }
             }
+            printf("\n");
         }
-        printf("\n");
     }
+
     printf("\n");
     printf("Matrix console printing ended.\n");
 }
@@ -412,7 +416,7 @@ void calculateNextState(uchar matrix[IMHT/4+2][REALWIDTH])
 // Count number of all live cells
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-int countLiveCells(char matrix[IMHT][REALWIDTH])
+int countLiveCells(char matrix[4][IMHT/4][REALWIDTH])
 {
     int result = 0;
 
@@ -421,7 +425,7 @@ int countLiveCells(char matrix[IMHT][REALWIDTH])
       for( int x = 0; x < REALWIDTH; x++ )
       {
         for(int count = 0; count < 8; count++) {
-            if( ( matrix[y][x] & (1 << count) ) != 0) result++;
+            if( ( matrix[y%4][y/4][x] & (1 << count) ) != 0) result++;
         }
       }
     }
@@ -489,20 +493,20 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
   uchar val;
   int   buttonInput;
   char  greenLedState = 1;
-  char  matrix[IMHT][REALWIDTH];         // array for the game state
+  char  matrix[4][IMHT/4][REALWIDTH];         // array for the game state
   int   rounds = 0;                 // number of passed rounds
 
   // number of useful rows (without the duplicate on top and bottom) for each worker thread
   const int rowsPerWorker = IMHT/4;
 
+  //Starting up and wait for pressing of SW1 button
+  printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
+  printf( "Waiting for press of SW1 button...\n" );
+
   uchar fromWorker1;
   uchar fromWorker2;
   uchar fromWorker3;
   uchar fromWorker4;
-
-  //Starting up and wait for pressing of SW1 button
-  printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
-  printf( "Waiting for press of SW1 button...\n" );
 
   while(1)
   {
@@ -513,18 +517,22 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
   uchar mask = 0;
   c_leds <: GREEN_LED;
   c_in <: 1;
-  for( int y = 0; y < IMHT; y++ )       //go through all lines
+  for(int worker = 0; worker < 4; worker ++) // for every worker
   {
-    for( int x = 0; x < REALWIDTH; x++ )     //go through each pixel per line
-    {
-        mask = 0;
-        for(int count = 0; count < 8; count++) {
-            c_in :> val;
-            if(val) mask |= (1 << count);
+      for( int y = 0; y < rowsPerWorker; y++ )       //for every line for every worker
+      {
+        for( int x = 0; x < REALWIDTH; x++ )     //go through each pixel per line
+        {
+            mask = 0;
+            for(int count = 0; count < 8; count++) {
+                c_in :> val;
+                if(val) mask |= (1 << count);
+            }
+            matrix[worker][y][x] = mask;
         }
-        matrix[y][x] = mask;
-    }
+      }
   }
+
   c_in :> int a;
   c_leds <: NO_LEDS;
 
@@ -545,16 +553,20 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   printf( "Saving to file... \n" );
                   c_leds  <: BLUE_LED;
                   c_out <: 1;
-                  for( int y = 0; y < IMHT; y++ )       // go through all lines
+                  for( int worker = 0; worker < 4; worker ++)
                   {
-                    for( int x = 0; x < REALWIDTH; x++ )     // go through each pixel per line
-                    {
-                        for(int count = 0; count < 8; count++) {
-                            if( (matrix[y][x] & (1 << count)) != 0) c_out <: ((uchar)(0xFF));
-                            else c_out <: ((uchar)(0x00));
+                      for( int y = 0; y < rowsPerWorker; y++ )       // go through all lines
+                      {
+                        for( int x = 0; x < REALWIDTH; x++ )     // go through each pixel per line
+                        {
+                            for(int count = 0; count < 8; count++) {
+                                if( (matrix[worker][y][x] & (1 << count)) != 0) c_out <: ((uchar)(0xFF));
+                                else c_out <: ((uchar)(0x00));
+                            }
                         }
-                    }
+                      }
                   }
+
                   c_leds  <: NO_LEDS;
                   c_out :> int a;
                   printf("Processing restarted.\n");
@@ -591,23 +603,21 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                       {
                           for(int c=0;c<REALWIDTH;c++)   // for every cell of every row we have to send every worker
                           {
-                              c_workers[worker] <: matrix[b+worker*rowsPerWorker][c];
+                              c_workers[worker] <: matrix[worker][b][c];
                           }
                       }
 
                       // sending additional row on top to each thread
-                      int index = worker;
-                      if(worker == 0) index = 4;
                       for(int c=0;c<REALWIDTH;c++)   // for every cell of the upper row we must send to every thread
                       {
-                          c_workers[worker] <: matrix[(index*rowsPerWorker-1)][c];
+                          c_workers[worker] <: matrix[(worker+3)%4][rowsPerWorker-1][c];
                       }
 
 
                       // sending additional row on bottom to each thread
                       for(int c=0;c<REALWIDTH;c++)   // for every cell of the lower row we must send to every thread
                       {
-                          c_workers[worker] <: matrix[((worker+1)%4)*rowsPerWorker][c];
+                          c_workers[worker] <: matrix[(worker+1)%4][0][c];
                       }
                   }
               }
@@ -625,10 +635,10 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                           c_workers[3] :> fromWorker4;
                       }
 
-                      matrix[b][c]                  = fromWorker1;
-                      matrix[b+rowsPerWorker][c]    = fromWorker2;
-                      matrix[b+2*rowsPerWorker][c]  = fromWorker3;
-                      matrix[b+3*rowsPerWorker][c]  = fromWorker4;
+                      matrix[0][b][c] = fromWorker1;
+                      matrix[1][b][c] = fromWorker2;
+                      matrix[2][b][c] = fromWorker3;
+                      matrix[3][b][c] = fromWorker4;
                   }
               }
 
