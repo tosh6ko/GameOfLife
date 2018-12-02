@@ -736,25 +736,25 @@ int main(void)
 
     par
     {
-
         on tile[0].core[0] : dataInStream(INFNAME, c_inIO);              // thread to read in a PGM image
         on tile[0].core[0] : dataOutStream(OUTFNAME, c_outIO);           // thread to write out a PGM image
         on tile[0] : i2c_master(i2c, 1, p_scl, p_sda, 10);       // server thread providing orientation data
         on tile[0] : orientation(i2c[0],c_control);              // client thread reading orientation data
         on tile[0] : buttonListener(buttons, c_buttons);         // thread listening for button action
         on tile[0] : changeLEDs(leds, c_leds);             // thread changing the leds
+        on tile[0] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_leds, c_worker);  // thread to coordinate work on image
         on tile[0] : workerThread(c_worker[0]);                                              // worker thread
         on tile[0] : workerThread(c_worker[1]);                                              // worker thread
-        on tile[0] : workerThread(c_worker[2]);                                              // worker thread
 
         on tile[1] : mainTimerThread(c_helper_timer, c_timer);   // main timer thread
         on tile[1] : helperTimerThread(c_helper_timer);          // thread checking for timer overflow
-        on tile[1] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_leds, c_worker);  // thread to coordinate work on image
+        on tile[1] : workerThread(c_worker[2]);                                              // worker thread
         on tile[1] : workerThread(c_worker[3]);                                              // worker thread
         on tile[1] : workerThread(c_worker[4]);                                              // worker thread
         on tile[1] : workerThread(c_worker[5]);                                              // worker thread
         on tile[1] : workerThread(c_worker[6]);                                              // worker thread
         on tile[1] : workerThread(c_worker[7]);                                              // worker thread
+
       }
 
       return 0;
