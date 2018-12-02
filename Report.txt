@@ -171,6 +171,13 @@ Time passed (seconds) : 276.028387
 600x600:
 
 1024x1024:
+============================================
+Number of rounds      : 255
+Number of live cells  : 5
+Time passed (raw)     : 61848591068
+Time passed (seconds) : 618.485911
+Time per round: 2,4235 (approximately)
+============================================
 
 
 3. Testing of 4 worker thread with bit packing (two tiles, sending only the additional rows on each round)
@@ -190,3 +197,10 @@ Time passed (seconds) : 276.028387
 600x600:
 
 1024x1024:
+============================================
+Number of rounds      : 604
+Number of live cells  : 5
+Time passed (raw)     : 142740130380
+Time passed (seconds) : 1427.401304
+Time per round: 2.362 (approximately)
+============================================
