@@ -7,12 +7,12 @@
 #include "i2c.h"
 #include <timer.h>
 
-#define  IMHT 16                  //image height (Should be divisible by 4 (number of worker threads))
-#define  IMWD 16                  //image width  (Should be divisible by 8 (number of bits in uchar))
+#define  IMHT 600                  //image height (Should be divisible by 4 (number of worker threads))
+#define  IMWD 600                  //image width  (Should be divisible by 8 (number of bits in uchar))
 
 #define REALWIDTH (IMWD/8)        //width of main matrix with bitwise packing
 
-#define INFNAME     "test.pgm"       // input image path
+#define INFNAME     "test600.pgm"       // input image path
 #define OUTFNAME    "testout.pgm"    // output image path
 
 typedef unsigned char uchar;      //using uchar as shorthand
@@ -169,13 +169,13 @@ void orientation( client interface i2c_master_if i2c, chanend toDist)
         int x = read_acceleration(i2c, FXOS8700EQ_OUT_X_MSB);
 
         // if the board is now tilted, send to the distributor 1
-        if (!tilted && (x>40 || x<-40))
+        if (!tilted && (x>50 || x<-50))
         {
             toDist <: 1;
             tilted = 1 - tilted;
         }
         // if the board is no longer tilted, send to the distributor 0
-        if(tilted && (x <= 20 && x>= -20))
+        if(tilted && (x <= 10 && x>= -10))
         {
             toDist <: 0;
             tilted = 1 - tilted;
