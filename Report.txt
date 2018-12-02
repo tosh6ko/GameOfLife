@@ -94,15 +94,57 @@ Time per round (seconds) : 0.199992
 3. Testing of 4 worker thread with bit packing
 
 16x16:
+============================================
+Number of rounds      : 206049
+Number of live cells  : 5
+Time passed (raw)     : 12888129567
+Time passed (seconds) : 128.881296
+============================================
 
 32x32:
+============================================
+Number of rounds      : 39206
+Number of live cells  : 5
+Time passed (raw)     : 9647292432
+Time passed (seconds) : 96.472924
+============================================
 
 64x64:
+============================================
+Number of rounds      : 5312
+Number of live cells  : 5
+Time passed (raw)     : 5332854128
+Time passed (seconds) : 53.328541
+============================================
 
 128x128:
+============================================
+Number of rounds      : 1560
+Number of live cells  : 5
+Time passed (raw)     : 6139249169
+Time passed (seconds) : 61.392492
+============================================
 
 256x256:
+============================================
+Number of rounds      : 1013
+Number of live cells  : 5
+Time passed (raw)     : 15969525433
+Time passed (seconds) : 159.695254
+============================================
 
 512x512:
+============================================
+Number of rounds      : 428
+Number of live cells  : 5
+Time passed (raw)     : 26875339195
+Time passed (seconds) : 268.753392
+============================================
 
 600x600:
+============================================
+Number of rounds      : 311
+Number of live cells  : 5
+Time passed (raw)     : 27602838661
+Time passed (seconds) : 276.028387
+============================================
