@@ -43,6 +43,7 @@ Time per round (seconds): 0.521104
 
 512x512: MEM
 600x600: MEM
+1024x1024: MEM
 
 
 2. Testing of 4 worker thread with characters (not bitwise)
@@ -90,6 +91,7 @@ Time per round (seconds) : 0.199992
 
 512x512: MEM
 600x600: MEM
+1024x1024: MEM
 
 3. Testing of 4 worker thread with bit packing (only one tile)
 
@@ -149,8 +151,7 @@ Time passed (raw)     : 27602838661
 Time passed (seconds) : 276.028387
 ============================================
 
-1024x1024:
-MEM
+1024x1024: MEM
 
 
 3. Testing of 4 worker thread with bit packing
