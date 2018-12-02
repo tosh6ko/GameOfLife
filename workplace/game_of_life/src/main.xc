@@ -7,13 +7,13 @@
 #include "i2c.h"
 #include <timer.h>
 
-#define  IMHT 16                  // image height (Should be divisible by WORKERS)
-#define  IMWD 16                  // image width  (Should be divisible by 8 (number of bits in uchar))
+#define  IMHT 1024                  // image height (Should be divisible by WORKERS)
+#define  IMWD 1024                  // image width  (Should be divisible by 8 (number of bits in uchar))
 #define  WORKERS 8                // number of workers
 
 #define REALWIDTH (IMWD/8)        //width of main matrix with bitwise packing
 
-#define INFNAME     "test16.pgm"       // input image path
+#define INFNAME     "test1024.pgm"       // input image path
 #define OUTFNAME    "testout.pgm"    // output image path
 
 typedef unsigned char uchar;      //using uchar as shorthand
