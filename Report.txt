@@ -169,3 +169,24 @@ Time passed (seconds) : 276.028387
 512x512:
 
 600x600:
+
+1024x1024:
+
+
+3. Testing of 4 worker thread with bit packing (two tiles, sending only the additional rows on each round)
+
+16x16:
+
+32x32:
+
+64x64:
+
+128x128:
+
+256x256:
+
+512x512:
+
+600x600:
+
+1024x1024:
