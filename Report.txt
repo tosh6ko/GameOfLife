@@ -410,15 +410,57 @@ Time per round (sec.) : 2.388955
 6. 8 threads with small changes (const array of single bits and memcpy)
 
 16x16:
+============================================
+Number of rounds      : 22386
+Number of live cells  : 5
+Time passed (raw)     : 877141796
+Time passed (seconds) : 8.771418
+Time per round (sec.) : 0.000392
+============================================
 
 32x32:
+============================================
+Number of rounds      : 7085
+Number of live cells  : 3
+Time passed (raw)     : 1047939133
+Time passed (seconds) : 10.479391
+Time per round (sec.) : 0.001479
+============================================
 
 64x64:
+============================================
+Number of rounds      : 3587
+Number of live cells  : 6
+Time passed (raw)     : 2088375914
+Time passed (seconds) : 20.883759
+Time per round (sec.) : 0.005822
+============================================
 
 128x128:
+============================================
+Number of rounds      : 3286
+Number of live cells  : 5
+Time passed (raw)     : 7611802514
+Time passed (seconds) : 76.118025
+Time per round (sec.) : 0.023164
+============================================
 
 256x256:
+============================================
+Number of rounds      : 1250
+Number of live cells  : 9
+Time passed (raw)     : 11251704340
+Time passed (seconds) : 112.517043
+Time per round (sec.) : 0.090014
+============================================
 
 512x512:
+============================================
+Number of rounds      : 574
+Number of live cells  : 5
+Time passed (raw)     : 20563491769
+Time passed (seconds) : 205.634918
+Time per round (sec.) : 0.358249
+============================================
 
 1024x1024:
