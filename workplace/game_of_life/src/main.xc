@@ -9,7 +9,7 @@
 
 #define  IMHT 16                  // image height (Should be divisible by WORKERS)
 #define  IMWD 16                  // image width  (Should be divisible by 8 (number of bits in uchar))
-#define  WORKERS 8                // number of workers (from 1 to 8, all handle 512x512)
+#define  WORKERS 2                // number of workers (from 1 to 8, all handle 512x512)
 
 #define REALWIDTH (IMWD/8)        //width of main matrix with bitwise packing
 
@@ -722,7 +722,7 @@ int main(void)
     chan c_helper_timer;                // channel for helper timer thread
     chan c_buttons;                     // channel for buttons listener thread
     chan c_leds;                         // channel for the led changing thread
-    chan c_worker[WORKERS];                   // channels for the four worker threads
+    chan c_worker[8];                   // channels for the four worker threads
 
     par
     {
