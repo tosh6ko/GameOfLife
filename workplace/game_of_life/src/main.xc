@@ -6,6 +6,7 @@
 #include "pgmIO.h"
 #include "i2c.h"
 #include <timer.h>
+#include <string.h>
 
 #define  IMHT 16                  // image height (Should be divisible by WORKERS)
 #define  IMWD 16                  // image width  (Should be divisible by 8 (number of bits in uchar))
@@ -389,13 +390,7 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
     int nX;
     int nY;
 
-    for(int a = 0; a < height; a++)
-    {
-        for(int b = 0; b < width; b++)
-        {
-            previous[a][b]=matrix[a][b];
-        }
-    }
+    memcpy ( previous, matrix, sizeof(matrix) );
 
     for(int a = 1; a < height-1; a++)
     {
