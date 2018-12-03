@@ -131,6 +131,7 @@ Number of rounds      : 1013
 Number of live cells  : 5
 Time passed (raw)     : 15969525433
 Time passed (seconds) : 159.695254
+Time per round (sec.) : 0.157645
 ============================================
 
 512x512:
@@ -185,6 +186,7 @@ Number of rounds      : 41
 Number of live cells  : 5
 Time passed (raw)     : 626983319
 Time passed (seconds) : 6.269833
+Time per round (sec.) : 0.152922
 ============================================
 
 512x512:
@@ -238,6 +240,7 @@ Number of rounds      : 1600
 Number of live cells  : 5
 Time passed (raw)     : 5889217062
 Time passed (seconds) : 58.892171
+Time per round (sec.) : 0.036808
 ============================================
 
 256x256:
@@ -331,15 +334,54 @@ Time per round (sec.) : 1.346576
 5. 4 threads asynchronous (8 is too many for the tile[0])
 
 16x16:
+============================================
+Number of rounds      : 20182
+Number of live cells  : 5
+Time passed (raw)     : 1207809473
+Time passed (seconds) : 12.078095
+============================================
 
 32x32:
+============================================
+Number of rounds      : 18149
+Number of live cells  : 6
+Time passed (raw)     : 4250247311
+Time passed (seconds) : 42.502473
+============================================
 
 64x64:
+============================================
+Number of rounds      : 3751
+Number of live cells  : 8
+Time passed (raw)     : 3500691251
+Time passed (seconds) : 35.006913
+============================================
 
 128x128:
+============================================
+Number of rounds      : 2300
+Number of live cells  : 5
+Time passed (raw)     : 8416993579
+Time passed (seconds) : 84.169936
+Time per round (sec.) : 0.036596
+============================================
 
 256x256:
+============================================
+Number of rounds      : 554
+Number of live cells  : 5
+Time passed (raw)     : 8217730768
+Time passed (seconds) : 82.177308
+Time per round (sec.) : 0.148334
+============================================
 
 512x512:
+============================================
+Number of rounds      : 312
+Number of live cells  : 5
+Time passed (raw)     : 18604279843
+Time passed (seconds) : 186.042798
+Time per round (sec.) : 0.596291
+============================================
 
 1024x1024:
