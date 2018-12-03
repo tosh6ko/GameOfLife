@@ -8,13 +8,13 @@
 #include <timer.h>
 #include <string.h>
 
-#define  IMHT 16                  // image height (Should be divisible by WORKERS)
-#define  IMWD 16                  // image width  (Should be divisible by 8 (number of bits in uchar))
+#define  IMHT 128                  // image height (Should be divisible by WORKERS)
+#define  IMWD 128                  // image width  (Should be divisible by 8 (number of bits in uchar))
 #define  WORKERS 8                // number of workers (from 2 to 8, all handle 512x512)(Best: 8)
 
 #define REALWIDTH (IMWD/8)        //width of main matrix with bitwise packing
 
-#define INFNAME     "test16.pgm"       // input image path
+#define INFNAME     "test128.pgm"       // input image path
 #define OUTFNAME    "testout.pgm"    // output image path
 
 typedef unsigned char uchar;      //using uchar as shorthand
@@ -41,9 +41,6 @@ on tile[0] : out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
 #define GREEN_LED           0x0004
 #define BLUE_LED            0x0002
 #define RED_LED             0x0008
-
-//Array for bitwise operations
-const int powerTwo[] = {1, 2, 4, 8, 16, 32, 64, 128};
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -348,7 +345,7 @@ void printMatrix(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
             for(int b=0;b<REALWIDTH;b++)
             {
                 for(int count = 0; count < 8; count++) {
-                    int bitValue = (matrix[worker][a][b] & powerTwo[count]);
+                    int bitValue = (matrix[worker][a][b] & (1 << count));
                     if(bitValue != 0) printf("1 ");
                     else printf("0 ");
                 }
@@ -405,11 +402,11 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
                 {
                     nX = ((b*8)+neighbourX[i]+(8*width)+c)%(8*width);
                     nY = (a+neighbourY[i]+height)%height;
-                    if((previous[nY][nX/8] & powerTwo[nX%8]) !=0) numberOfAlive++;
+                    if((previous[nY][nX/8] & (1 << (nX%8))) !=0) numberOfAlive++;
                 }
                 int cellValue = (previous[a][b] >> c) & 1;
                 if (isAlive(numberOfAlive, cellValue))
-                    matrix[a][b] = matrix[a][b] | powerTwo[c];
+                    matrix[a][b] = matrix[a][b] | (1 << c);
             }
         }
     }
@@ -429,7 +426,7 @@ int countLiveCells(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
       for( int x = 0; x < REALWIDTH; x++ )
       {
         for(int count = 0; count < 8; count++) {
-            if( ( matrix[y%WORKERS][y/WORKERS][x] & powerTwo[count] ) != 0) result++;
+            if( ( matrix[y%WORKERS][y/WORKERS][x] & (1 << count) ) != 0) result++;
         }
       }
     }
@@ -552,7 +549,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               mask = 0;
               for(int count = 0; count < 8; count++) {
                   c_in :> val;
-                  if(val) mask |= powerTwo[count];
+                  if(val) mask |= (1 << count);
               }
               matrix[worker][y][x] = mask;
           }
@@ -618,7 +615,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                           for( int x = 0; x < REALWIDTH; x++ )     // go through each pixel per line
                           {
                               for(int count = 0; count < 8; count++) {
-                                  if( (matrix[worker][y][x] & powerTwo[count]) != 0) c_out <: ((uchar)(0xFF));
+                                  if( (matrix[worker][y][x] & (1 << count)) != 0) c_out <: ((uchar)(0xFF));
                                   else c_out <: ((uchar)(0x00));
                               }
                           }
