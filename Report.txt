@@ -328,7 +328,7 @@ Time passed (seconds) : 1642.823134
 Time per round (sec.) : 1.346576
 ============================================
 
-5. 8 threads asynchronous
+5. 4 threads asynchronous (8 is too many for the tile[0])
 
 16x16:
 
