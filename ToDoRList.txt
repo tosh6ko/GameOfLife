@@ -1,6 +1,3 @@
-1. Make the parallel sending and receiving from worker threads to be on the outermost cycle
-(MILESTONE: Bitwise parallel working. Sending whole game state each time)
-1. Check the speed and do speed tests
 1. Make the sending to be only of the additional rows
 (MILESTONE: Calculation without sending the whole matrix back and forth)
 1. Check the speed and do speed tests
