@@ -139,6 +139,7 @@ Number of rounds      : 428
 Number of live cells  : 5
 Time passed (raw)     : 26875339195
 Time passed (seconds) : 268.753392
+Time per round (sec.) : 0.627928
 ============================================
 
 1024x1024: MEM
@@ -192,6 +193,7 @@ Number of rounds      : 86
 Number of live cells  : 5
 Time passed (raw)     : 5215367098
 Time passed (seconds) : 52.153671
+Time per round (sec.) : 0.606438
 ============================================
 
 1024x1024:
@@ -200,6 +202,7 @@ Number of rounds      : 255
 Number of live cells  : 5
 Time passed (raw)     : 61848591068
 Time passed (seconds) : 618.485911
+Time per round (sec.) : 2.425435
 ============================================
 
 
@@ -243,6 +246,7 @@ Number of rounds      : 1398
 Number of live cells  : 5
 Time passed (raw)     : 20815246469
 Time passed (seconds) : 208.152465
+Time per round (sec.) : 0.148893
 ============================================
 
 512x512:
@@ -251,6 +255,7 @@ Number of rounds      : 379
 Number of live cells  : 5
 Time passed (raw)     : 22381188395
 Time passed (seconds) : 223.811884
+Time per round (sec.) : 0.590533
 ============================================
 
 1024x1024:
@@ -259,21 +264,60 @@ Number of rounds      : 604
 Number of live cells  : 5
 Time passed (raw)     : 142740130380
 Time passed (seconds) : 1427.401304
+Time per round (sec.) : 2.363247
 ============================================
 
 4. 8 threads
 
 16x16:
+============================================
+Number of rounds      : 58236
+Number of live cells  : 5
+Time passed (raw)     : 2135094849
+Time passed (seconds) : 21.350948
+============================================
 
 32x32:
+============================================
+Number of rounds      : 11051
+Number of live cells  : 3
+Time passed (raw)     : 1524648725
+Time passed (seconds) : 15.246487
+============================================
 
 64x64:
+============================================
+Number of rounds      : 3603
+Number of live cells  : 2
+Time passed (raw)     : 1954357125
+Time passed (seconds) : 19.543571
+============================================
 
 128x128:
+============================================
+Number of rounds      : 2929
+Number of live cells  : 5
+Time passed (raw)     : 6261329237
+Time passed (seconds) : 62.613292
+============================================
 
 256x256:
+============================================
+Number of rounds      : 1333
+Number of live cells  : 5
+Time passed (raw)     : 11031725262
+Time passed (seconds) : 110.317253
+Time per round (sec.) : 0.082759
+============================================
 
 512x512:
+============================================
+Number of rounds      : 699
+Number of live cells  : 5
+Time passed (raw)     : 23625433591
+Time passed (seconds) : 236.254336
+Time per round (sec.) : 0.337989
+============================================
 
 1024x1024:
 ============================================
@@ -281,6 +325,7 @@ Number of rounds      : 1220
 Number of live cells  : 5
 Time passed (raw)     : 164282313435
 Time passed (seconds) : 1642.823134
+Time per round (sec.) : 1.346576
 ============================================
 
 5. 8 threads asynchronous
