@@ -57,6 +57,7 @@ Number of rounds      : 26993
 Number of live cells  : 5
 Time passed (raw)     : 2286063982
 Time passed (seconds) : 22.860640
+Time per round (sec.) : 0.000847
 ============================================
 
 32x32:
@@ -65,6 +66,7 @@ Number of rounds      : 6844
 Number of live cells  : 5
 Time passed (raw)     : 2215853501
 Time passed (seconds) : 22.158535
+Time per round (sec.) : 0.003238
 ============================================
 
 64x64:
@@ -73,6 +75,7 @@ Number of rounds      : 1574
 Number of live cells  : 5
 Time passed (raw)     : 2009023594
 Time passed (seconds) : 20.090236
+Time per round (sec.) : 0.012764
 ============================================
 
 128x128:
@@ -81,6 +84,7 @@ Number of rounds      : 951
 Number of live cells  : 5
 Time passed (raw)     : 4808290798
 Time passed (seconds) : 48.082908
+Time per round (sec.) : 0.050560
 ============================================
 
 256x256:
@@ -89,7 +93,7 @@ Number of rounds      : 557
 Number of live cells  : 5
 Time passed (raw)     : 11139526868
 Time passed (seconds) : 111.395269
-Time per round (seconds) : 0.199992
+Time per round (sec.) : 0.199992
 ============================================
 
 512x512: MEM
@@ -103,6 +107,7 @@ Number of rounds      : 206049
 Number of live cells  : 5
 Time passed (raw)     : 12888129567
 Time passed (seconds) : 128.881296
+Time per round (sec.) : 0.000625
 ============================================
 
 32x32:
@@ -111,6 +116,7 @@ Number of rounds      : 39206
 Number of live cells  : 5
 Time passed (raw)     : 9647292432
 Time passed (seconds) : 96.472924
+Time per round (sec.) : 0.002461
 ============================================
 
 64x64:
@@ -119,6 +125,7 @@ Number of rounds      : 5312
 Number of live cells  : 5
 Time passed (raw)     : 5332854128
 Time passed (seconds) : 53.328541
+Time per round (sec.) : 0.010039
 ============================================
 
 128x128:
@@ -127,6 +134,7 @@ Number of rounds      : 1560
 Number of live cells  : 5
 Time passed (raw)     : 6139249169
 Time passed (seconds) : 61.392492
+Time per round (sec.) : 0.039354
 ============================================
 
 256x256:
