@@ -7,13 +7,13 @@
 #include "i2c.h"
 #include <timer.h>
 
-#define  IMHT 1024                  // image height (Should be divisible by WORKERS)
-#define  IMWD 1024                  // image width  (Should be divisible by 8 (number of bits in uchar))
-#define  WORKERS 8                // number of workers
+#define  IMHT 16                  // image height (Should be divisible by WORKERS)
+#define  IMWD 16                  // image width  (Should be divisible by 8 (number of bits in uchar))
+#define  WORKERS 8                // number of workers (from 1 to 8, all handle 512x512)
 
 #define REALWIDTH (IMWD/8)        //width of main matrix with bitwise packing
 
-#define INFNAME     "test1024.pgm"       // input image path
+#define INFNAME     "test16.pgm"       // input image path
 #define OUTFNAME    "testout.pgm"    // output image path
 
 typedef unsigned char uchar;      //using uchar as shorthand
@@ -106,33 +106,31 @@ void dataOutStream(char outfname[], chanend c_in)
       select
       {
           case c_in :> int from_distributor:
-              if(from_distributor == 2)
+              if(from_distributor != 1) break;
+              //Open PGM file
+              printf( "DataOutStream: Start...\n" );
+              res = _openoutpgm( outfname, IMWD, IMHT );
+              if( res )
               {
-                  //Open PGM file
-                  printf( "DataOutStream: Start...\n" );
-                  res = _openoutpgm( outfname, IMWD, IMHT );
-                  if( res )
-                  {
-                    printf( "DataOutStream: Error opening %s\n.", outfname );
-                    return;
-                  }
-
-                  //Compile each line of the image and write the image line-by-line
-                  for( int y = 0; y < IMHT; y++ )
-                  {
-                    for( int x = 0; x < IMWD; x++ )
-                    {
-                      c_in :> line[ x ];
-                    }
-                    _writeoutline( line, IMWD );
-                    printf( "DataOutStream: Line written to the file...\n" );
-                  }
-
-                  //Close the PGM image
-                  _closeoutpgm();
-                  printf( "DataOutStream: Done...\n" );
-                  c_in <: 1;
+                printf( "DataOutStream: Error opening %s\n.", outfname );
+                return;
               }
+
+              //Compile each line of the image and write the image line-by-line
+              for( int y = 0; y < IMHT; y++ )
+              {
+                for( int x = 0; x < IMWD; x++ )
+                {
+                  c_in :> line[ x ];
+                }
+                _writeoutline( line, IMWD );
+                printf( "DataOutStream: Line written to the file...\n" );
+              }
+
+              //Close the PGM image
+              _closeoutpgm();
+              printf( "DataOutStream: Done...\n" );
+              c_in <: 1;
               break;
       }
 
@@ -597,7 +595,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   printf("Processing stopped.\n");
                   printf( "Saving to file... \n" );
                   c_leds  <: BLUE_LED;
-                  c_out <: 2;
+                  c_out <: 1;
 
                   for (int worker = 0; worker < WORKERS; worker ++)
                   {
@@ -735,17 +733,17 @@ int main(void)
         on tile[0] : buttonListener(buttons, c_buttons);         // thread listening for button action
         on tile[0] : changeLEDs(leds, c_leds);             // thread changing the leds
         on tile[0] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_leds, c_worker);  // thread to coordinate work on image
-        on tile[0] : workerThread(c_worker[0]);                                              // worker thread
-        on tile[0] : workerThread(c_worker[1]);                                              // worker thread
+        on tile[0] : if(WORKERS >= 7) workerThread(c_worker[6]);                                              // worker thread
+        on tile[0] : if(WORKERS >= 8) workerThread(c_worker[7]);                                              // worker thread
 
         on tile[1] : mainTimerThread(c_helper_timer, c_timer);   // main timer thread
         on tile[1] : helperTimerThread(c_helper_timer);          // thread checking for timer overflow
-        on tile[1] : workerThread(c_worker[2]);                                              // worker thread
-        on tile[1] : workerThread(c_worker[3]);                                              // worker thread
-        on tile[1] : workerThread(c_worker[4]);                                              // worker thread
-        on tile[1] : workerThread(c_worker[5]);                                              // worker thread
-        on tile[1] : workerThread(c_worker[6]);                                              // worker thread
-        on tile[1] : workerThread(c_worker[7]);                                              // worker thread
+        on tile[1] : if(WORKERS >= 1) workerThread(c_worker[0]);                                              // worker thread
+        on tile[1] : if(WORKERS >= 2) workerThread(c_worker[1]);                                              // worker thread
+        on tile[1] : if(WORKERS >= 3) workerThread(c_worker[2]);                                              // worker thread
+        on tile[1] : if(WORKERS >= 4) workerThread(c_worker[3]);                                              // worker thread
+        on tile[1] : if(WORKERS >= 5) workerThread(c_worker[4]);                                              // worker thread
+        on tile[1] : if(WORKERS >= 6) workerThread(c_worker[5]);                                              // worker thread
 
       }
 
