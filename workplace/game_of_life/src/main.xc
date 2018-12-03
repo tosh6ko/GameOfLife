@@ -9,7 +9,7 @@
 
 #define  IMHT 16                  // image height (Should be divisible by WORKERS)
 #define  IMWD 16                  // image width  (Should be divisible by 8 (number of bits in uchar))
-#define  WORKERS 4                // number of workers (from 2 to 8, all handle 512x512)(Best: 8)
+#define  WORKERS 8                // number of workers (from 2 to 8, all handle 512x512)(Best: 8)
 
 #define REALWIDTH (IMWD/8)        //width of main matrix with bitwise packing
 
@@ -444,7 +444,7 @@ int countLiveCells(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
 // Worker thread working on part of the game state
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void workerThread(streaming chanend c_distributor)
+void workerThread(chanend c_distributor)
 {
     // number of useful rows (without the duplicate on top and bottom) for each worker thread
     const int rowsPerWorker     = IMHT/WORKERS;
@@ -521,8 +521,7 @@ void workerThread(streaming chanend c_distributor)
 // to worker threads which implement it.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void distributor(chanend c_in, chanend c_out, chanend c_control,
-        chanend c_timer, chanend c_buttons, chanend c_leds, streaming chanend c_workers[WORKERS])
+void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer, chanend c_buttons, chanend c_leds, chanend c_workers[WORKERS])
 {
   uchar val;
   int   buttonInput;
@@ -723,7 +722,7 @@ int main(void)
     chan c_helper_timer;                // channel for helper timer thread
     chan c_buttons;                     // channel for buttons listener thread
     chan c_leds;                         // channel for the led changing thread
-    streaming chan c_worker[4];                   // channels for the four worker threads
+    chan c_worker[8];                   // channels for the four worker threads
 
     par
     {
@@ -735,16 +734,16 @@ int main(void)
         on tile[0] : changeLEDs(leds, c_leds);             // thread changing the leds
         on tile[0] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_leds, c_worker);  // thread to coordinate work on image
         on tile[0] : if(WORKERS >= 3) {workerThread(c_worker[2]);}                                              // worker thread
-        //on tile[0] : if(WORKERS >= 8) {workerThread(c_worker[7]);}                                              // worker thread
+        on tile[0] : if(WORKERS >= 8) {workerThread(c_worker[7]);}                                              // worker thread
 
         on tile[1] : mainTimerThread(c_helper_timer, c_timer);   // main timer thread
         on tile[1] : helperTimerThread(c_helper_timer);          // thread checking for timer overflow
         on tile[1] : if(WORKERS >= 1) {workerThread(c_worker[0]);}                                              // worker thread
         on tile[1] : if(WORKERS >= 2) {workerThread(c_worker[1]);}                                              // worker thread
         on tile[1] : if(WORKERS >= 4) {workerThread(c_worker[3]);}                                              // worker thread
-        //on tile[1] : if(WORKERS >= 5) {workerThread(c_worker[4]);}                                              // worker thread
-        //on tile[1] : if(WORKERS >= 6) {workerThread(c_worker[5]);}                                              // worker thread
-        //on tile[1] : if(WORKERS >= 7) {workerThread(c_worker[6]);}                                              // worker thread
+        on tile[1] : if(WORKERS >= 5) {workerThread(c_worker[4]);}                                              // worker thread
+        on tile[1] : if(WORKERS >= 6) {workerThread(c_worker[5]);}                                              // worker thread
+        on tile[1] : if(WORKERS >= 7) {workerThread(c_worker[6]);}                                              // worker thread
 
       }
 
