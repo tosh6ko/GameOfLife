@@ -9,11 +9,11 @@
 
 #define  IMHT 16                  // image height (Should be divisible by WORKERS)
 #define  IMWD 16                  // image width  (Should be divisible by 8 (number of bits in uchar))
-#define  WORKERS 2                // number of workers (from 1 to 8, all handle 512x512)
+#define  WORKERS 4                // number of workers (from 2 to 8, all handle 512x512)(Best: 8)
 
 #define REALWIDTH (IMWD/8)        //width of main matrix with bitwise packing
 
-#define INFNAME     "test512.pgm"       // input image path
+#define INFNAME     "test16.pgm"       // input image path
 #define OUTFNAME    "testout.pgm"    // output image path
 
 typedef unsigned char uchar;      //using uchar as shorthand
@@ -733,17 +733,17 @@ int main(void)
         on tile[0] : buttonListener(buttons, c_buttons);         // thread listening for button action
         on tile[0] : changeLEDs(leds, c_leds);             // thread changing the leds
         on tile[0] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_leds, c_worker);  // thread to coordinate work on image
-        on tile[0] : if(WORKERS >= 7) workerThread(c_worker[6]);                                              // worker thread
-        on tile[0] : if(WORKERS >= 8) workerThread(c_worker[7]);                                              // worker thread
+        on tile[0] : if(WORKERS >= 3) {workerThread(c_worker[2]);}                                              // worker thread
+        on tile[0] : if(WORKERS >= 8) {workerThread(c_worker[7]);}                                              // worker thread
 
         on tile[1] : mainTimerThread(c_helper_timer, c_timer);   // main timer thread
         on tile[1] : helperTimerThread(c_helper_timer);          // thread checking for timer overflow
-        on tile[1] : if(WORKERS >= 1) workerThread(c_worker[0]);                                              // worker thread
-        on tile[1] : if(WORKERS >= 2) workerThread(c_worker[1]);                                              // worker thread
-        on tile[1] : if(WORKERS >= 3) workerThread(c_worker[2]);                                              // worker thread
-        on tile[1] : if(WORKERS >= 4) workerThread(c_worker[3]);                                              // worker thread
-        on tile[1] : if(WORKERS >= 5) workerThread(c_worker[4]);                                              // worker thread
-        on tile[1] : if(WORKERS >= 6) workerThread(c_worker[5]);                                              // worker thread
+        on tile[1] : if(WORKERS >= 1) {workerThread(c_worker[0]);}                                              // worker thread
+        on tile[1] : if(WORKERS >= 2) {workerThread(c_worker[1]);}                                              // worker thread
+        on tile[1] : if(WORKERS >= 4) {workerThread(c_worker[3]);}                                              // worker thread
+        on tile[1] : if(WORKERS >= 5) {workerThread(c_worker[4]);}                                              // worker thread
+        on tile[1] : if(WORKERS >= 6) {workerThread(c_worker[5]);}                                              // worker thread
+        on tile[1] : if(WORKERS >= 7) {workerThread(c_worker[6]);}                                              // worker thread
 
       }
 
