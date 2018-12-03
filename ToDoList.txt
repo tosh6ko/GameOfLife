@@ -1,0 +1,14 @@
+1. Make the parallel sending and receiving from worker threads to be on the outermost cycle
+(MILESTONE: Bitwise parallel working. Sending whole game state each time)
+1. Check the speed and do speed tests
+1. Make the sending to be only of the additional rows
+(MILESTONE: Calculation without sending the whole matrix back and forth)
+1. Check the speed and do speed tests
+1. Use 8 threads
+(Last one)
+1. Check the speed and do speed tests
+1. Test asynchronous channels
+(Future one)
+1. Check the speed and do speed tests
+1. Make google spreadsheet to make the report. Make it only accessible with uob account
+1. Put in the report some info about the timer threadssssss
