@@ -601,7 +601,9 @@ Time passed (seconds) : 120.032202
 Time per round (sec.) : 1.200322
 
 1736x1736:
-
+Time passed (raw)     : 34714705466
+Time passed (seconds) : 347.147055
+Time per round (sec.) : 3.471471
 
 
 
