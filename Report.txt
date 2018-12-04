@@ -1,3 +1,5 @@
+MAXIMUM SQUARE SIZE: 1736X1736
+
 1. Testing of one thread with characters (not bitwise)
 
 16x16:
