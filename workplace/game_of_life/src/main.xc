@@ -397,7 +397,8 @@ char isAlive(int neighbours, char previousState)
 /////////////////////////////////////////////////////////////////////////////////////////
 void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
 {
-    uchar previous[IMHT/WORKERS+2][REALWIDTH];
+    uchar saved1[REALWIDTH];
+    uchar saved2[REALWIDTH];
     int height = IMHT/WORKERS+2;
     int width  = REALWIDTH;
     const int neighbourX[8] = {-1,  0, 1, -1, 1, -1,  0, 1};
@@ -406,28 +407,58 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
     int nX;
     int nY;
 
-    memcpy ( previous, matrix, sizeof(matrix) );
-
     for(int a = 1; a < height-1; a++)
     {
-        for(int b = 0; b < width; b++)
-        {
-            matrix[a][b] = 0;
-
-            for(int c=0; c<8;c++)
-            {
-                numberOfAlive = 0;
-                for(int i=0;i<8;i++)
-                {
-                    nX = ((b*8)+neighbourX[i]+(8*width)+c)%(8*width);
-                    nY = (a+neighbourY[i]+height)%height;
-                    if((previous[nY][nX/8] & (1 << (nX%8))) !=0) numberOfAlive++;
-                }
-                int cellValue = (previous[a][b] >> c) & 1;
-                if (isAlive(numberOfAlive, cellValue))
-                    matrix[a][b] = matrix[a][b] | (1 << c);
+        if(a > 2) {
+            if(a%2 == 1) {
+                for(int b = 0; b < width; b++) matrix[a-2][b] = saved1[b];
+            } else {
+                for(int b = 0; b < width; b++) matrix[a-2][b] = saved2[b];
             }
         }
+        if(a%2 == 1) {
+            for(int b = 0; b < width; b++)
+            {
+                saved1[b] = 0;
+
+                for(int c=0; c<8;c++)
+                {
+                    numberOfAlive = 0;
+                    for(int i=0;i<8;i++)
+                    {
+                        nX = ((b*8)+neighbourX[i]+(8*width)+c)%(8*width);
+                        nY = (a+neighbourY[i]+height)%height;
+                        if((matrix[nY][nX/8] & (1 << (nX%8))) !=0) numberOfAlive++;
+                    }
+                    int cellValue = (matrix[a][b] >> c) & 1;
+                    if (isAlive(numberOfAlive, cellValue))
+                        saved1[b] = saved1[b] | (1 << c);
+                }
+            }
+        } else {
+            for(int b = 0; b < width; b++)
+            {
+                saved2[b] = 0;
+
+                for(int c=0; c<8;c++)
+                {
+                    numberOfAlive = 0;
+                    for(int i=0;i<8;i++)
+                    {
+                        nX = ((b*8)+neighbourX[i]+(8*width)+c)%(8*width);
+                        nY = (a+neighbourY[i]+height)%height;
+                        if((matrix[nY][nX/8] & (1 << (nX%8))) !=0) numberOfAlive++;
+                    }
+                    int cellValue = (matrix[a][b] >> c) & 1;
+                    if (isAlive(numberOfAlive, cellValue))
+                        saved2[b] = saved2[b] | (1 << c);
+                }
+            }
+        }
+    }
+    for(int b = 0; b < width; b++) {
+        matrix[ (height-2) - (height-1)%2 ][b] = saved1[b];
+        matrix[ (height-2) - height%2][b] = saved2[b];
     }
 }
 
