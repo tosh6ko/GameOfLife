@@ -2,7 +2,7 @@
 1. Report: Put in the report some info about the timer threadssssss
 1. Report: Add tables for all different optimisations and tests
             (Make 4 threads to come before 8 threads)
-1. Report: Add a diagram with the info from all the tables fisualized
+1. Report: Add a diagram with the info from all the tables visualized
 1. Report: Add pictures of 16x16 after 2 rounds
 1. Report: Add pictures of all different image sizes after 100 cycles
             {
