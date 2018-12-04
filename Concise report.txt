@@ -1,0 +1,191 @@
+1. Testing of one thread with characters (not bitwise)
+16x16:      Time per round (sec.) : 0.002003
+32x32:      Time per round (sec.) : 0.007991
+64x64:      Time per round (sec.) : 0.033530
+128x128:    Time per round (sec.) : 0.134068
+256x256:    Time per round (seconds): 0.521104
+512x512:    MEM
+1024x1024:  MEM
+
+
+2. Testing of 4 worker thread with characters (not bitwise)
+
+16x16:
+Time per round (sec.) : 0.000847
+
+32x32:
+Time per round (sec.) : 0.003238
+
+64x64:
+Time per round (sec.) : 0.012764
+
+128x128:
+Time per round (sec.) : 0.050560
+
+256x256:
+Time per round (sec.) : 0.199992
+
+512x512: MEM
+1024x1024: MEM
+
+3. Testing of 4 worker thread with bit packing (only one tile)
+
+16x16:
+Time per round (sec.) : 0.000625
+
+32x32:
+Time per round (sec.) : 0.002461
+
+64x64:
+Time per round (sec.) : 0.010039
+
+128x128:
+Time per round (sec.) : 0.039354
+
+256x256:
+Time per round (sec.) : 0.157645
+
+512x512:
+Time per round (sec.) : 0.627928
+
+1024x1024: MEM
+
+
+3. Testing of 4 worker thread with bit packing (two tiles)
+
+16x16:
+Time per round (sec.) : 0.000608
+
+32x32:
+Time per round (sec.) : 0.002400
+
+64x64:
+Time per round (sec.) : 0.009762
+
+128x128:
+Time per round (sec.) : 0.037695
+
+256x256:
+Time per round (sec.) : 0.152922
+
+512x512:
+Time per round (sec.) : 0.606438
+
+1024x1024:
+Time per round (sec.) : 2.425435
+
+
+3. Testing of 4 worker thread with bit packing (two tiles, sending only the additional rows on each round)
+
+16x16:
+Time per round (sec.) : 0.000595
+
+32x32:
+Time per round (sec.) : 0.002345
+
+64x64:
+Time per round (sec.) : 0.009534
+
+128x128:
+Time per round (sec.) : 0.036808
+
+256x256:
+Time per round (sec.) : 0.148893
+
+512x512:
+Time per round (sec.) : 0.590533
+
+1024x1024:
+Time per round (sec.) : 2.363247
+
+4. 8 threads
+
+16x16:
+Time per round (sec.) : 0.000367
+
+32x32:
+Time per round (sec.) : 0.001379
+
+64x64:
+Time per round (sec.) : 0.005424
+
+128x128:
+Time per round (sec.) : 0.021377
+
+256x256:
+Time per round (sec.) : 0.082759
+
+512x512:
+Time per round (sec.) : 0.337989
+
+1024x1024:
+Time per round (sec.) : 1.346576
+
+5. 4 threads asynchronous (8 is too many for the tile[0])
+
+16x16:
+Time per round (sec.) : 0.000598
+
+32x32:
+Time per round (sec.) : 0.002342
+
+64x64:
+Time per round (sec.) : 0.009333
+
+128x128:
+Time per round (sec.) : 0.036596
+
+256x256:
+Time per round (sec.) : 0.148334
+
+512x512:
+Time per round (sec.) : 0.596291
+
+1024x1024:
+Time per round (sec.) : 2.388955
+
+6. 8 threads with small changes (const array of single bits and memcpy)
+
+16x16:
+Time per round (sec.) : 0.000392
+
+32x32:
+Time per round (sec.) : 0.001479
+
+64x64:
+Time per round (sec.) : 0.005822
+
+128x128:
+Time per round (sec.) : 0.023164
+
+256x256:
+Time per round (sec.) : 0.090014
+
+512x512:
+Time per round (sec.) : 0.358249
+
+1024x1024:
+Time per round (sec.) : 1.434841
+
+7. 8 threads with memcpy
+
+16x16:
+Time per round (sec.) : 0.000358
+
+32x32:
+Time per round (sec.) : 0.001378
+
+64x64:
+Time per round (sec.) : 0.005522
+
+128x128:
+Time per round (sec.) : 0.021327
+
+256x256:
+Time per round (sec.) : 0.082847
+
+512x512:
+Time per round (sec.) : 0.328144
+
+1024x1024:
+Time per round (sec.) : 1.309630
