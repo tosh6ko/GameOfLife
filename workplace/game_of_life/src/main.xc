@@ -370,7 +370,7 @@ int countLiveCells(chanend c_workers[WORKERS])
 
     for(int worker = 0; worker < WORKERS; worker++)
     {
-        c_workers[worker] <: 3;
+        c_workers[worker] <: 3; //Request workers to send everything
         for(int a = 0; a < IMHT/WORKERS; a++)
         {
             for(int b = 0; b < REALWIDTH; b++)
@@ -406,8 +406,12 @@ char isAlive(int neighbours, char previousState)
 /////////////////////////////////////////////////////////////////////////////////////////
 void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
 {
+    //Two arrays used to save rows before updating them in the matrix
+    //saved1 is used for rows with odd index
+    //saved2 is used for rows with even index
     uchar saved1[REALWIDTH];
     uchar saved2[REALWIDTH];
+
     int height = IMHT/WORKERS+2;
     int width  = REALWIDTH;
     const int neighbourX[8] = {-1,  0, 1, -1, 1, -1,  0, 1};
@@ -418,6 +422,7 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
 
     for(int a = 1; a < height-1; a++)
     {
+        //If applicable, save row with index (a-2), as it will not have impact on any rows from a to (height-2)
         if(a > 2) {
             if(a%2 == 1) {
                 for(int b = 0; b < width; b++) matrix[a-2][b] = saved1[b];
@@ -425,7 +430,7 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
                 for(int b = 0; b < width; b++) matrix[a-2][b] = saved2[b];
             }
         }
-        if(a%2 == 1) {
+        if(a%2 == 1) { //If a is odd, save next state of the row a to saved1
             for(int b = 0; b < width; b++)
             {
                 saved1[b] = 0;
@@ -444,7 +449,7 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
                         saved1[b] = saved1[b] | (1 << c);
                 }
             }
-        } else {
+        } else { // a is even, save next state of the row a to saved2
             for(int b = 0; b < width; b++)
             {
                 saved2[b] = 0;
@@ -465,6 +470,7 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
             }
         }
     }
+    //Save last two rows to the matrix (as they were not saved in previous 'for' loop)
     for(int b = 0; b < width; b++) {
         matrix[ (height-2) - (height-1)%2 ][b] = saved1[b];
         matrix[ (height-2) - height%2][b] = saved2[b];
@@ -574,6 +580,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
       if(buttonInput == 14) break;
   }
 
+  //Read the input file
   uchar mask = 0;
   c_leds <: GREEN_LED;
   c_in <: 1;
@@ -589,8 +596,8 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   c_in :> val;
                   if(val) mask |= (1 << count);
               }
-              //matrix[worker][y][x] = mask;
-              c_workers[worker] <: mask;
+              c_workers[worker] <: mask;    //Send mask to the applicable worker
+              //If this row is an additional row for other worker, save it
               if(y == 0) matrix[(worker+(WORKERS-1))%WORKERS][1][x] = mask;
               else if(y == rowsPerWorker-1) matrix[(worker+1)%WORKERS][0][x] = mask;
           }
@@ -601,8 +608,6 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
   c_leds <: NO_LEDS;
 
   printf( "Processing...\n" );
-
-  // printMatrix(matrix);
 
   c_timer <: 1;
 
@@ -660,9 +665,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               break;
 
           default:
-              // Sending parts of the matrix to each thread
-
-              // Sending to workers
+              // Sending parts of the matrix to each worker thread
               for (int worker = 0; worker < WORKERS; worker ++)
               {
                   c_workers[worker] <: 2;       // Sending information that additional rows will be sent
@@ -705,7 +708,6 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   c_leds <: NO_LEDS;
               }
               greenLedState = 1 - greenLedState;
-              // delay_milliseconds(1000);
               break;
       }
   }
