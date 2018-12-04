@@ -366,7 +366,7 @@ void printMatrix(chanend c_workers[WORKERS])
 int countLiveCells(chanend c_workers[WORKERS])
 {
     int result = 0;
-    int package;
+    uchar package;
 
     for(int worker = 0; worker < WORKERS; worker++)
     {
