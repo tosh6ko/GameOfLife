@@ -357,6 +357,28 @@ void printMatrix(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
+//  Count number of all live cells
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+int countLiveCells(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
+{
+    int result = 0;
+
+    for( int y = 0; y < IMHT; y++ )
+    {
+      for( int x = 0; x < REALWIDTH; x++ )
+      {
+        for(int count = 0; count < 8; count++) {
+            if( ( matrix[y%WORKERS][y/WORKERS][x] & (1 << count) ) != 0) result++;
+        }
+      }
+    }
+
+    return result;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
 //  Calculate next state of a cell based on the number of neighbours
 //  and its current state
 //
@@ -407,28 +429,6 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
             }
         }
     }
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-//  Count number of all live cells
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-int countLiveCells(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
-{
-    int result = 0;
-
-    for( int y = 0; y < IMHT; y++ )
-    {
-      for( int x = 0; x < REALWIDTH; x++ )
-      {
-        for(int count = 0; count < 8; count++) {
-            if( ( matrix[y%WORKERS][y/WORKERS][x] & (1 << count) ) != 0) result++;
-        }
-      }
-    }
-
-    return result;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
