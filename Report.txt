@@ -571,8 +571,14 @@ Time passed (seconds) : 0.032643
 Time per round (sec.) : 0.000326
 
 32x32:
+Time passed (raw)     : 12250546
+Time passed (seconds) : 0.122505
+Time per round (sec.) : 0.001225
 
 64x64:
+Time passed (raw)     : 48105363
+Time passed (seconds) : 0.481054
+Time per round (sec.) : 0.004811
 
 128x128:
 
