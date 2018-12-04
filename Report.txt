@@ -550,3 +550,44 @@ Time passed (raw)     : 22918524353
 Time passed (seconds) : 229.185244
 Time per round (sec.) : 1.309630
 ============================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+LAST. Final solution (times for 100 rounds)
+
+16x16:
+
+32x32:
+
+64x64:
+
+128x128:
+
+256x256:
+Time passed (raw)     : 747295709
+Time passed (seconds) : 7.472957
+Time per round (sec.) : 0.074730
+
+512x512:
+Time passed (raw)     : 3011570259
+Time passed (seconds) : 30.115703
+Time per round (sec.) : 0.301157
+
+1024x1024:
+
+1736x1736:
+
+
+
+
+
