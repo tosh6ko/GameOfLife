@@ -566,6 +566,9 @@ Time per round (sec.) : 1.309630
 LAST. Final solution (times for 100 rounds)
 
 16x16:
+Time passed (raw)     : 3264263
+Time passed (seconds) : 0.032643
+Time per round (sec.) : 0.000326
 
 32x32:
 
