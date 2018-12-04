@@ -7,21 +7,21 @@
 #include "i2c.h"
 #include <timer.h>
 
-#define  IMHT 128                  // image height (Should be divisible by WORKERS)
-#define  IMWD 128                  // image width  (Should be divisible by 8 (number of bits in uchar))
-#define  WORKERS 8                // number of workers (from 2 to 8, all handle 512x512)(Best: 8)
+#define  IMHT 16                    // Image height (Should be divisible by WORKERS)
+#define  IMWD 16                    // Image width  (Should be divisible by 8 (number of bits in uchar))
+#define  WORKERS 8                  // Number of workers (from 2 to 8, all can handle 512x512)(Best: 8)
 
-#define REALWIDTH (IMWD/8)        //width of main matrix with bitwise packing
+#define REALWIDTH (IMWD/8)          // Width of main matrix with bitwise packing
 
-#define INFNAME     "test128.pgm"       // input image path
-#define OUTFNAME    "testout.pgm"    // output image path
+#define INFNAME     "test16.pgm"    // Input image path
+#define OUTFNAME    "testout.pgm"   // Output image path
 
-typedef unsigned char uchar;      //using uchar as shorthand
+typedef unsigned char uchar;        // Using uchar as shorthand
 
-on tile[0] : port p_scl = XS1_PORT_1E;         //interface ports to orientation
+on tile[0] : port p_scl = XS1_PORT_1E;  // Interface ports to orientation
 on tile[0] : port p_sda = XS1_PORT_1F;
 
-#define FXOS8700EQ_I2C_ADDR 0x1E  //register addresses for orientation
+#define FXOS8700EQ_I2C_ADDR 0x1E  // Register addresses for orientation
 #define FXOS8700EQ_XYZ_DATA_CFG_REG 0x0E
 #define FXOS8700EQ_CTRL_REG_1 0x2A
 #define FXOS8700EQ_DR_STATUS 0x0
@@ -32,8 +32,8 @@ on tile[0] : port p_sda = XS1_PORT_1F;
 #define FXOS8700EQ_OUT_Z_MSB 0x5
 #define FXOS8700EQ_OUT_Z_LSB 0x6
 
-on tile[0] : in port buttons = XS1_PORT_4E; //port to access xCore-200 buttons
-on tile[0] : out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
+on tile[0] : in port buttons = XS1_PORT_4E; // Port to access xCore-200 buttons
+on tile[0] : out port leds = XS1_PORT_4F;   // Port to access xCore-200 LEDs
 
 #define NO_LEDS             0X0000
 #define GREEN_SEPARATE_LED  0x0001
@@ -43,7 +43,7 @@ on tile[0] : out port leds = XS1_PORT_4F;   //port to access xCore-200 LEDs
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Read Image from PGM file from path infname[] to channel c_out
+//  Read Image from PGM file from path infname[] to channel c_out
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 [[combinable]]
@@ -60,7 +60,7 @@ void dataInStream(char infname[], chanend c_out)
               uchar line[ IMWD ];
               printf( "DataInStream: Start...\n" );
 
-              //Open PGM file
+              // Open PGM file
               res = _openinpgm( infname, IMWD, IMHT );
               if( res )
               {
@@ -68,7 +68,7 @@ void dataInStream(char infname[], chanend c_out)
                 return;
               }
 
-              //Read image line-by-line and send byte by byte to channel c_out
+              // Read image line-by-line and send byte by byte to channel c_out
               for( int y = 0; y < IMHT; y++ )
               {
                 _readinline( line, IMWD );
@@ -78,7 +78,7 @@ void dataInStream(char infname[], chanend c_out)
                 }
               }
 
-              //Close PGM image file
+              // Close PGM image file
               _closeinpgm();
               printf( "DataInStream: Done...\n" );
 
@@ -92,7 +92,7 @@ void dataInStream(char infname[], chanend c_out)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Write pixel stream from channel c_in to PGM image file
+//  Write pixel stream from channel c_in to PGM image file
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 [[combinable]]
@@ -107,7 +107,7 @@ void dataOutStream(char outfname[], chanend c_in)
       {
           case c_in :> int from_distributor:
               if(from_distributor != 1) break;
-              //Open PGM file
+              // Open PGM file
               printf( "DataOutStream: Start...\n" );
               res = _openoutpgm( outfname, IMWD, IMHT );
               if( res )
@@ -116,7 +116,7 @@ void dataOutStream(char outfname[], chanend c_in)
                 return;
               }
 
-              //Compile each line of the image and write the image line-by-line
+              // Compile each line of the image and write the image line-by-line
               for( int y = 0; y < IMHT; y++ )
               {
                 for( int x = 0; x < IMWD; x++ )
@@ -127,7 +127,7 @@ void dataOutStream(char outfname[], chanend c_in)
                 printf( "DataOutStream: Line written to the file...\n" );
               }
 
-              //Close the PGM image
+              // Close the PGM image
               _closeoutpgm();
               printf( "DataOutStream: Done...\n" );
               c_in <: 1;
@@ -139,8 +139,8 @@ void dataOutStream(char outfname[], chanend c_in)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Initialise and  read orientation
-// Send every change in tiltness through the channel
+//  Initialise and  read orientation
+//  Send every change in tiltness through the channel
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void orientation( client interface i2c_master_if i2c, chanend toDist)
@@ -163,24 +163,24 @@ void orientation( client interface i2c_master_if i2c, chanend toDist)
         printf("I2C write reg failed\n");
     }
 
-    //Probe the orientation x-axis forever
+    // Probe the orientation x-axis forever
     while (1)
     {
-        //check until new orientation data is available
+        // Check until new orientation data is available
         do {
           status_data = i2c.read_reg(FXOS8700EQ_I2C_ADDR, FXOS8700EQ_DR_STATUS, result);
         } while (!status_data & 0x08);
 
-        //get new x-axis tilt value
+        // Get new x-axis tilt value
         int x = read_acceleration(i2c, FXOS8700EQ_OUT_X_MSB);
 
-        // if the board is now tilted, send to the distributor 1
+        // If the board is now tilted, send to the distributor 1
         if (!tilted && (x>50 || x<-50))
         {
             toDist <: 1;
             tilted = 1 - tilted;
         }
-        // if the board is no longer tilted, send to the distributor 0
+        // If the board is no longer tilted, send to the distributor 0
         if(tilted && (x <= 10 && x>= -10))
         {
             toDist <: 0;
@@ -191,7 +191,7 @@ void orientation( client interface i2c_master_if i2c, chanend toDist)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Listens for button input and sends it to the distributor
+//  Listens for button input and sends it to the distributor
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void buttonListener(in port b, chanend c_buttons)
@@ -200,11 +200,11 @@ void buttonListener(in port b, chanend c_buttons)
 
     while (1)
     {
-        b when pinseq(15)  :> r;    // check that no button is pressed
-        b when pinsneq(15) :> r;    // check if some buttons are pressed
-        if ((r==13) || (r==14))     // if either button is pressed
+        b when pinseq(15)  :> r;    // Check that no button is pressed
+        b when pinsneq(15) :> r;    // Check if some buttons are pressed
+        if ((r==13) || (r==14))     // If either button is pressed
         {
-            c_buttons <: r;         // send button pattern to userAnt
+            c_buttons <: r;         // Send button pattern to userAnt
         }
     }
     return;
@@ -212,7 +212,7 @@ void buttonListener(in port b, chanend c_buttons)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Listens for button input and sends it to the distributor
+//  Listens for button input and sends it to the distributor
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void changeLEDs(out port p, chanend c_distributor)
@@ -228,8 +228,8 @@ void changeLEDs(out port p, chanend c_distributor)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Main timer thread, communicating with the
-// client and running concurrently with the helper thread
+//  Main timer thread, communicating with the
+//  client and running concurrently with the helper thread
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void mainTimerThread(chanend c_helper_timer, chanend c_timer)
@@ -241,13 +241,13 @@ void mainTimerThread(chanend c_helper_timer, chanend c_timer)
     unsigned long long int resultingTime;
     int fromController;
     int fromHelperTimerThread;
-    unsigned int period = 100000000;                    // period of 1 second
-    unsigned long long overflowSize = 4294967295 + 1;   // the length of one overflow
+    unsigned int period = 100000000;                    // Period of 1 second
+    unsigned long long overflowSize = 4294967295 + 1;   // The length of one overflow
 
     // We initialize a timer and find the constant
-    // which added to it would nullify it
+    // which added to it would nullify it.
     // This is done to ensure that the two timer threads
-    // overflow at the same time (they don't share the same timer)
+    // overflow at the same time (they don't share the same timer).
 
     timer t;
     t :> startTime;
@@ -282,8 +282,6 @@ void mainTimerThread(chanend c_helper_timer, chanend c_timer)
                 }
                 else if(fromController == 3)
                 {
-                    // printf("startTime : %u\n", startTime);
-                    // printf("endTime   : %u\n", endTime);
                     // printf("Number of timer overflows  : %u\n", numberOfOverflows);
                     printf("Time passed (raw)     : %llu\n", resultingTime);
                     printf("Time passed (seconds) : %f\n", ((double)resultingTime/period));
@@ -296,7 +294,7 @@ void mainTimerThread(chanend c_helper_timer, chanend c_timer)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Helper timer thread, which checks continuously for overflows of the timer
+//  Helper timer thread, which checks continuously for overflows of the timer
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void helperTimerThread(chanend c_helper_timer)
@@ -331,7 +329,7 @@ void helperTimerThread(chanend c_helper_timer)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Print matrix to the terminal
+//  Print matrix to the terminal
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void printMatrix(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
@@ -359,8 +357,8 @@ void printMatrix(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Calculate next state of a cell based on the number of neighbours
-// and its current state
+//  Calculate next state of a cell based on the number of neighbours
+//  and its current state
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 char isAlive(int neighbours, char previousState)
@@ -372,7 +370,7 @@ char isAlive(int neighbours, char previousState)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Calculate next state
+//  Calculate next state
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
@@ -413,7 +411,7 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Count number of all live cells
+//  Count number of all live cells
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 int countLiveCells(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
@@ -435,12 +433,12 @@ int countLiveCells(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Worker thread working on part of the game state
+//  Worker thread working on part of the game state
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void workerThread(chanend c_distributor)
 {
-    // number of useful rows (without the duplicate on top and bottom) for each worker thread
+    // Number of useful rows (without the duplicate on top and bottom) for each worker thread
     const int rowsPerWorker     = IMHT/WORKERS;
 
     uchar matrix[IMHT/WORKERS+2][REALWIDTH];
@@ -453,9 +451,9 @@ void workerThread(chanend c_distributor)
                 if(fromDistributor == 1)
                 {
                     // Receiving matrix without additional columns
-                    for(int b=0;b<rowsPerWorker;b++)     // for every row that should be received from the distributor
+                    for(int b=0;b<rowsPerWorker;b++)    // For every row that should be received from the distributor
                     {
-                        for(int c=0;c<REALWIDTH;c++)   // for every cell of every row we have to send every worker
+                        for(int c=0;c<REALWIDTH;c++)    // For every cell of every row we have to send every worker
                         {
                             c_distributor :> matrix[b+1][c];
                         }
@@ -463,14 +461,14 @@ void workerThread(chanend c_distributor)
                 }
                 else if(fromDistributor == 2)
                 {
-                    // receiving additional row on top to each thread
-                    for(int c=0;c<REALWIDTH;c++)   // for every cell of the upper row we must receive
+                    // Receiving additional row on top to each thread
+                    for(int c=0;c<REALWIDTH;c++)    // For every cell of the upper row we must receive
                     {
                         c_distributor :> matrix[0][c];
                     }
 
-                    // receiving additional row on bottom to each thread
-                    for(int c=0;c<REALWIDTH;c++)   // for every cell of the lower row we must send to every thread
+                    // Receiving additional row on bottom to each thread
+                    for(int c=0;c<REALWIDTH;c++)    // For every cell of the lower row we must send to every thread
                     {
                         c_distributor :> matrix[rowsPerWorker+1][c];
                     }
@@ -478,15 +476,15 @@ void workerThread(chanend c_distributor)
                     // Calculating next state
                     calculateNextState(matrix);
 
-                    // sending additional row on top to each thread
-                    for(int c=0;c<REALWIDTH;c++)   // for every cell of the upper row we must send to every thread
+                    // Sending additional row on top to each thread
+                    for(int c=0;c<REALWIDTH;c++)    // For every cell of the upper row we must send to every thread
                     {
                         c_distributor <: matrix[1][c];
                     }
 
 
-                    // sending additional row on bottom to each thread
-                    for(int c=0;c<REALWIDTH;c++)   // for every cell of the lower row we must send to every thread
+                    // Sending additional row on bottom to each thread
+                    for(int c=0;c<REALWIDTH;c++)    // For every cell of the lower row we must send to every thread
                     {
                         c_distributor <: matrix[rowsPerWorker][c];
                     }
@@ -495,9 +493,9 @@ void workerThread(chanend c_distributor)
                 else if(fromDistributor == 3)
                 {
                     // Sending everything back
-                    for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
+                    for(int b=0;b<rowsPerWorker;b++)    // For every row that should be sent to each worker
                     {
-                        for(int c=0;c<REALWIDTH;c++)   // for every cell of every row we have to send every worker
+                        for(int c=0;c<REALWIDTH;c++)    // For every cell of every row we have to send every worker
                         {
                             c_distributor <: matrix[b+1][c];
                         }
@@ -511,8 +509,8 @@ void workerThread(chanend c_distributor)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Function, which implements game of life by farming out parts of the gamestate
-// to worker threads which implement it.
+//  Function, which implements game of life by farming out parts of the gamestate
+//  to worker threads which implement it.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer, chanend c_buttons, chanend c_leds, chanend c_workers[WORKERS])
@@ -520,13 +518,13 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
   uchar val;
   int   buttonInput;
   char  greenLedState = 1;
-  char  matrix[WORKERS][IMHT/WORKERS][REALWIDTH];         // array for the game state
-  int   rounds = 0;                 // number of passed rounds
+  char  matrix[WORKERS][IMHT/WORKERS][REALWIDTH];   // Array for the game state
+  int   rounds = 0;                                 // Number of passed rounds
 
-  // number of useful rows (without the duplicate on top and bottom) for each worker thread
+  // Number of useful rows (without the duplicate on top and bottom) for each worker thread
   const int rowsPerWorker = IMHT/WORKERS;
 
-  //Starting up and wait for pressing of SW1 button
+  // Starting up and wait for pressing of SW1 button
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
   printf( "Waiting for press of SW1 button...\n" );
 
@@ -539,11 +537,11 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
   uchar mask = 0;
   c_leds <: GREEN_LED;
   c_in <: 1;
-  for(int worker = 0; worker < WORKERS; worker ++) // for every worker
+  for(int worker = 0; worker < WORKERS; worker ++)  // For every worker
   {
-      for( int y = 0; y < rowsPerWorker; y++ )       //for every line for every worker
+      for( int y = 0; y < rowsPerWorker; y++ )      // For every line for every worker
       {
-          for( int x = 0; x < REALWIDTH; x++ )     //go through each pixel per line
+          for( int x = 0; x < REALWIDTH; x++ )      // Go through each pixel per line
           {
               mask = 0;
               for(int count = 0; count < 8; count++) {
@@ -568,11 +566,11 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
   // Sending matrix to worker threads
   for (int worker = 0; worker < WORKERS; worker ++)
   {
-      c_workers[worker] <: 1;   // sending information that the whole matrix will be sent, not the additional rows
+      c_workers[worker] <: 1;   // Sending information that the whole matrix will be sent, not the additional rows
 
-      for(int b=0;b<rowsPerWorker;b++)     // for every row that should be sent to each worker
+      for(int b=0;b<rowsPerWorker;b++)  // For every row that should be sent to each worker
       {
-          for(int c=0;c<REALWIDTH;c++)   // for every cell of every row we have to send every worker
+          for(int c=0;c<REALWIDTH;c++)  // For every cell of every row we have to send every worker
           {
               c_workers[worker] <: matrix[worker][b][c];
           }
@@ -593,15 +591,13 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
 
                   for (int worker = 0; worker < WORKERS; worker ++)
                   {
-                      c_workers[worker] <: 3;       // sending a request to send everything
+                      c_workers[worker] <: 3;           // Sending a request to send everything
 
-                      for(int b=0;b<rowsPerWorker;b++)     // for every row that we must receive from the worker
+                      for(int b=0;b<rowsPerWorker;b++)  // For every row that we must receive from the worker
                       {
+                          for(int c=0;c<REALWIDTH;c++)  // For every cell that we must receive from the worker
                           {
-                              for(int c=0;c<REALWIDTH;c++)   // for every cell that we must receive from the worker
-                              {
-                                  c_workers[worker] :> matrix[worker][b][c];
-                              }
+                              c_workers[worker] :> matrix[worker][b][c];
                           }
                       }
                   }
@@ -609,9 +605,9 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
 
                   for( int worker = 0; worker < WORKERS; worker ++)
                   {
-                      for( int y = 0; y < rowsPerWorker; y++ )       // go through all lines
+                      for( int y = 0; y < rowsPerWorker; y++ )  // Go through all lines
                       {
-                          for( int x = 0; x < REALWIDTH; x++ )     // go through each pixel per line
+                          for( int x = 0; x < REALWIDTH; x++ )  // Go through each pixel per line
                           {
                               for(int count = 0; count < 8; count++) {
                                   if( (matrix[worker][y][x] & (1 << count)) != 0) c_out <: ((uchar)(0xFF));
@@ -651,33 +647,33 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               // Sending to workers
               for (int worker = 0; worker < WORKERS; worker ++)
               {
-                  c_workers[worker] <: 2;       // sending information that additional rows will be sent
+                  c_workers[worker] <: 2;       // Sending information that additional rows will be sent
 
-                  // sending additional row on top to each thread
-                  for(int c=0;c<REALWIDTH;c++)   // for every cell of the upper row we must send to every thread
+                  // Sending additional row on top to each thread
+                  for(int c=0;c<REALWIDTH;c++)  // For every cell of the upper row we must send to every thread
                   {
                       c_workers[worker] <: matrix[(worker+(WORKERS-1))%WORKERS][rowsPerWorker-1][c];
                   }
 
 
-                  // sending additional row on bottom to each thread
-                  for(int c=0;c<REALWIDTH;c++)   // for every cell of the lower row we must send to every thread
+                  // Sending additional row on bottom to each thread
+                  for(int c=0;c<REALWIDTH;c++)  // For every cell of the lower row we must send to every thread
                   {
                       c_workers[worker] <: matrix[(worker+1)%WORKERS][0][c];
                   }
               }
 
               // Receiving from workers
-              for (int worker = 0; worker < WORKERS; worker ++) // for every worker
+              for (int worker = 0; worker < WORKERS; worker ++) // For every worker
               {
-                  // receiving additional row on top to each thread
-                  for(int c=0;c<REALWIDTH;c++)   // for every cell of the upper row we must send to every thread
+                  // Receiving additional row on top to each thread
+                  for(int c=0;c<REALWIDTH;c++)      // For every cell of the upper row we must send to every thread
                   {
                       c_workers[worker] :> matrix[worker][0][c];
                   }
 
-                  // receiving additional row on bottom to each thread
-                  for(int c=0;c<REALWIDTH;c++)   // for every cell of the lower row we must send to every thread
+                  // Receiving additional row on bottom to each thread
+                  for(int c=0;c<REALWIDTH;c++)      // For every cell of the lower row we must send to every thread
                   {
                       c_workers[worker] :> matrix[worker][rowsPerWorker-1][c];
                   }
@@ -702,42 +698,43 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Orchestrate concurrent system and start up all threads
+//  Orchestrate concurrent system and start up all threads
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 int main(void)
 {
-    i2c_master_if i2c[1];               // interface to orientation
+    i2c_master_if i2c[1];               // Interface to orientation
 
-    chan c_inIO;                        // channel for input file stream
-    chan c_outIO;                       // channel for output file stream
-    chan c_control;                     // channel for accelerometer
-    chan c_timer;                       // channel for main timer
-    chan c_helper_timer;                // channel for helper timer thread
-    chan c_buttons;                     // channel for buttons listener thread
-    chan c_leds;                         // channel for the led changing thread
-    chan c_worker[8];                   // channels for the four worker threads
+    chan c_inIO;                        // Channel for input file stream
+    chan c_outIO;                       // Channel for output file stream
+    chan c_control;                     // Channel for accelerometer
+    chan c_timer;                       // Channel for main timer
+    chan c_helper_timer;                // Channel for helper timer thread
+    chan c_buttons;                     // Channel for buttons listener thread
+    chan c_leds;                        // Channel for the led changing thread
+    chan c_worker[8];                   // Channels for the four worker threads
 
     par
     {
-        on tile[0].core[0] : dataInStream(INFNAME, c_inIO);              // thread to read in a PGM image
-        on tile[0].core[0] : dataOutStream(OUTFNAME, c_outIO);           // thread to write out a PGM image
-        on tile[0] : i2c_master(i2c, 1, p_scl, p_sda, 10);       // server thread providing orientation data
-        on tile[0] : orientation(i2c[0],c_control);              // client thread reading orientation data
-        on tile[0] : buttonListener(buttons, c_buttons);         // thread listening for button action
-        on tile[0] : changeLEDs(leds, c_leds);             // thread changing the leds
-        on tile[0] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_leds, c_worker);  // thread to coordinate work on image
-        on tile[0] : if(WORKERS >= 3) {workerThread(c_worker[2]);}                                              // worker thread
-        on tile[0] : if(WORKERS >= 8) {workerThread(c_worker[7]);}                                              // worker thread
+        on tile[0].core[0] : dataInStream(INFNAME, c_inIO);         // Thread to read in a PGM image
+        on tile[0].core[0] : dataOutStream(OUTFNAME, c_outIO);      // Thread to write out a PGM image
+        on tile[0] : i2c_master(i2c, 1, p_scl, p_sda, 10);          // Server thread providing orientation data
+        on tile[0] : orientation(i2c[0],c_control);                 // Client thread reading orientation data
+        on tile[0] : buttonListener(buttons, c_buttons);            // Thread listening for button action
+        on tile[0] : changeLEDs(leds, c_leds);                      // Thread changing the leds
+        // Thread to coordinate work on image
+        on tile[0] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_leds, c_worker);
+        on tile[0] : if(WORKERS >= 3) {workerThread(c_worker[2]);}  // Worker thread
+        on tile[0] : if(WORKERS >= 8) {workerThread(c_worker[7]);}  // Worker thread
 
-        on tile[1] : mainTimerThread(c_helper_timer, c_timer);   // main timer thread
-        on tile[1] : helperTimerThread(c_helper_timer);          // thread checking for timer overflow
-        on tile[1] : if(WORKERS >= 1) {workerThread(c_worker[0]);}                                              // worker thread
-        on tile[1] : if(WORKERS >= 2) {workerThread(c_worker[1]);}                                              // worker thread
-        on tile[1] : if(WORKERS >= 4) {workerThread(c_worker[3]);}                                              // worker thread
-        on tile[1] : if(WORKERS >= 5) {workerThread(c_worker[4]);}                                              // worker thread
-        on tile[1] : if(WORKERS >= 6) {workerThread(c_worker[5]);}                                              // worker thread
-        on tile[1] : if(WORKERS >= 7) {workerThread(c_worker[6]);}                                              // worker thread
+        on tile[1] : mainTimerThread(c_helper_timer, c_timer);      // Main timer thread
+        on tile[1] : helperTimerThread(c_helper_timer);             // Thread checking for timer overflow
+        on tile[1] : if(WORKERS >= 1) {workerThread(c_worker[0]);}  // Worker thread
+        on tile[1] : if(WORKERS >= 2) {workerThread(c_worker[1]);}  // Worker thread
+        on tile[1] : if(WORKERS >= 4) {workerThread(c_worker[3]);}  // Worker thread
+        on tile[1] : if(WORKERS >= 5) {workerThread(c_worker[4]);}  // Worker thread
+        on tile[1] : if(WORKERS >= 6) {workerThread(c_worker[5]);}  // Worker thread
+        on tile[1] : if(WORKERS >= 7) {workerThread(c_worker[6]);}  // Worker thread
 
       }
 
