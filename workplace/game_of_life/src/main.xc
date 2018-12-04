@@ -613,7 +613,6 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   for (int worker = 0; worker < WORKERS; worker ++)
                   {
                       c_workers[worker] <: 3;           // Sending a request to send everything
-                      printf("Handshake sent for worker %d\n", worker);
                       for(int b=0;b<rowsPerWorker;b++)  // For every row that we must receive from the worker
                       {
                           for(int c=0;c<REALWIDTH;c++)  // For every cell that we must receive from the worker
@@ -658,38 +657,32 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
               for (int worker = 0; worker < WORKERS; worker ++)
               {
                   c_workers[worker] <: 2;       // Sending information that additional rows will be sent
-                  printf("Worker %d sending additional rows\n", worker);
                   // Sending additional row on top to each thread
                   for(int c=0;c<REALWIDTH;c++)  // For every cell of the upper row we must send to every thread
                   {
                       c_workers[worker] <: matrix[worker][0][c];
                   }
-                  printf("Sent top row\n");
 
                   // Sending additional row on bottom to each thread
                   for(int c=0;c<REALWIDTH;c++)  // For every cell of the lower row we must send to every thread
                   {
                       c_workers[worker] <: matrix[worker][1][c];
                   }
-                  printf("Sent bottom row\n");
               }
 
               // Receiving from workers
               for (int worker = 0; worker < WORKERS; worker ++) // For every worker
               {
                   // Receiving additional row on top to each thread
-                  printf("Worker %d receiving rows for other threads\n", worker);
                   for(int c=0;c<REALWIDTH;c++)      // For every cell of the upper row we must send to every thread
                   {
                       c_workers[worker] :> matrix[(worker+(WORKERS-1))%WORKERS][1][c];
                   }
-                  printf("Top row received\n");
                   // Receiving additional row on bottom to each thread
                   for(int c=0;c<REALWIDTH;c++)      // For every cell of the lower row we must send to every thread
                   {
                       c_workers[worker] :> matrix[(worker+1)%WORKERS][0][c];
                   }
-                  printf("Bottom row received\n");
               }
 
 
