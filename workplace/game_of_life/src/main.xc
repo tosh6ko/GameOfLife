@@ -1,4 +1,4 @@
-// COMS20001 - Cellular Automaton Farm
+// COMS20001 - Game of Life
 
 #include <platform.h>
 #include <xs1.h>
