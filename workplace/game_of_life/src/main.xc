@@ -6,7 +6,6 @@
 #include "pgmIO.h"
 #include "i2c.h"
 #include <timer.h>
-#include <string.h>
 
 #define  IMHT 128                  // image height (Should be divisible by WORKERS)
 #define  IMWD 128                  // image width  (Should be divisible by 8 (number of bits in uchar))
