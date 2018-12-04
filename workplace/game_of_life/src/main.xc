@@ -7,8 +7,8 @@
 #include "i2c.h"
 #include <timer.h>
 
-#define  IMHT 16                    // Image height (Should be divisible by WORKERS)
-#define  IMWD 16                    // Image width  (Should be divisible by 8 (number of bits in uchar))
+#define  IMHT 1024                    // Image height (Should be divisible by WORKERS)
+#define  IMWD 2048                    // Image width  (Should be divisible by 8 (number of bits in uchar))
 #define  WORKERS 8                  // Number of workers (from 2 to 8, all can handle 512x512)(Best: 8)
 
 #define REALWIDTH (IMWD/8)          // Width of main matrix with bitwise packing
@@ -332,17 +332,20 @@ void helperTimerThread(chanend c_helper_timer)
 //  Print matrix to the terminal
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void printMatrix(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
+void printMatrix(chanend c_workers[WORKERS])
 {
     printf("Matrix console printing starting.\n");
+    int package;
     for(int worker = 0; worker < WORKERS; worker ++)
     {
+        c_workers[worker] <: 3;
         for(int a=0;a<IMHT/WORKERS;a++)
         {
             for(int b=0;b<REALWIDTH;b++)
             {
+                c_workers[worker] :> package;
                 for(int count = 0; count < 8; count++) {
-                    int bitValue = (matrix[worker][a][b] & (1 << count));
+                    int bitValue = (package & (1 << count));
                     if(bitValue != 0) printf("1 ");
                     else printf("0 ");
                 }
@@ -360,18 +363,24 @@ void printMatrix(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
 //  Count number of all live cells
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-int countLiveCells(char matrix[WORKERS][IMHT/WORKERS][REALWIDTH])
+int countLiveCells(chanend c_workers[WORKERS])
 {
     int result = 0;
+    int package;
 
-    for( int y = 0; y < IMHT; y++ )
+    for(int worker = 0; worker < WORKERS; worker++)
     {
-      for( int x = 0; x < REALWIDTH; x++ )
-      {
-        for(int count = 0; count < 8; count++) {
-            if( ( matrix[y%WORKERS][y/WORKERS][x] & (1 << count) ) != 0) result++;
+        c_workers[worker] <: 3;
+        for(int a = 0; a < IMHT/WORKERS; a++)
+        {
+            for(int b = 0; b < REALWIDTH; b++)
+            {
+                c_workers[worker] :> package;
+                for(int count = 0; count < 8; count++) {
+                    if( ( package & (1 << count) ) != 0) result++;
+                }
+            }
         }
-      }
     }
 
     return result;
@@ -638,7 +647,7 @@ void distributor(chanend c_in, chanend c_out, chanend c_control, chanend c_timer
                   c_leds      <: RED_LED;
                   printf("============================================\n");
                   printf("Number of rounds      : %d\n", rounds);
-                  printf("Number of live cells  : %d\n", countLiveCells(matrix));
+                  printf("Number of live cells  : %d\n", countLiveCells(c_workers));
                   c_timer <: 3;
                   c_timer :> int a;
                   printf("============================================\n");
@@ -722,25 +731,25 @@ int main(void)
 
     par
     {
-        on tile[0].core[0] : dataInStream(INFNAME, c_inIO);         // Thread to read in a PGM image
-        on tile[0].core[0] : dataOutStream(OUTFNAME, c_outIO);      // Thread to write out a PGM image
         on tile[0] : i2c_master(i2c, 1, p_scl, p_sda, 10);          // Server thread providing orientation data
         on tile[0] : orientation(i2c[0],c_control);                 // Client thread reading orientation data
         on tile[0] : buttonListener(buttons, c_buttons);            // Thread listening for button action
         on tile[0] : changeLEDs(leds, c_leds);                      // Thread changing the leds
-        // Thread to coordinate work on image
-        on tile[0] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_leds, c_worker);
+        on tile[0] : if(WORKERS >= 1) {workerThread(c_worker[0]);}  // Worker thread
         on tile[0] : if(WORKERS >= 3) {workerThread(c_worker[2]);}  // Worker thread
-        on tile[0] : if(WORKERS >= 8) {workerThread(c_worker[7]);}  // Worker thread
+        on tile[0] : if(WORKERS >= 5) {workerThread(c_worker[4]);}  // Worker thread
+        on tile[0] : if(WORKERS >= 7) {workerThread(c_worker[6]);}  // Worker thread
 
+        on tile[1].core[0] : dataInStream(INFNAME, c_inIO);         // Thread to read in a PGM image
+        on tile[1].core[0] : dataOutStream(OUTFNAME, c_outIO);      // Thread to write out a PGM image
         on tile[1] : mainTimerThread(c_helper_timer, c_timer);      // Main timer thread
         on tile[1] : helperTimerThread(c_helper_timer);             // Thread checking for timer overflow
-        on tile[1] : if(WORKERS >= 1) {workerThread(c_worker[0]);}  // Worker thread
+        // Thread to coordinate work on image
+        on tile[1] : distributor(c_inIO, c_outIO, c_control, c_timer, c_buttons, c_leds, c_worker);
         on tile[1] : if(WORKERS >= 2) {workerThread(c_worker[1]);}  // Worker thread
         on tile[1] : if(WORKERS >= 4) {workerThread(c_worker[3]);}  // Worker thread
-        on tile[1] : if(WORKERS >= 5) {workerThread(c_worker[4]);}  // Worker thread
         on tile[1] : if(WORKERS >= 6) {workerThread(c_worker[5]);}  // Worker thread
-        on tile[1] : if(WORKERS >= 7) {workerThread(c_worker[6]);}  // Worker thread
+        on tile[1] : if(WORKERS >= 8) {workerThread(c_worker[7]);}  // Worker thread
 
       }
 
