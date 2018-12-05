@@ -9,7 +9,7 @@
 
 #define  IMHT 16                    // Image height (Should be divisible by WORKERS)
 #define  IMWD 16                    // Image width  (Should be divisible by 8 (number of bits in uchar))
-#define  WORKERS 8                  // Number of workers (from 2 to 8, all can handle 512x512)(Best: 8)
+#define  WORKERS 8                  // Number of workers (from 1 to 8, all can handle 512x512)(Best: 8)
 
 #define REALWIDTH (IMWD/8)          // Width of main matrix with bitwise packing
 
