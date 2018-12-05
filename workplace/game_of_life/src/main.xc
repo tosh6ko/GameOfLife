@@ -335,7 +335,7 @@ void helperTimerThread(chanend c_helper_timer)
 void printMatrix(chanend c_workers[WORKERS])
 {
     printf("Matrix console printing starting.\n");
-    int package;
+    uchar package;
     for(int worker = 0; worker < WORKERS; worker ++)
     {
         c_workers[worker] <: 3;
