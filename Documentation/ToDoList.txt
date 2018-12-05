@@ -1,2 +1,0 @@
-1. Remove the time and date of the screenshots for the graphics
-1. Recheck for the speeds of 1 and 2 tiles.

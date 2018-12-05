@@ -83,7 +83,6 @@
 1024x1024:  Time per round (sec.) : 1.309630
 
 8. LAST. Final solution (times for 100 rounds)
-
 16x16:      Time per round (sec.) : 0.000326
 32x32:      Time per round (sec.) : 0.001225
 64x64:      Time per round (sec.) : 0.004811
