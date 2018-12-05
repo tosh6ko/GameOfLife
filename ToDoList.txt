@@ -1,3 +1,6 @@
 1. Properly format the directory
 1. Remove the time and date of the screenshots for the graphics
 1. (Make the 1736x1736 file for any case) (while working on one, we will let the other work)
+1. Check if 1 worker does more than 512 in order to change number of workers from 1 to 8
+1. Recheck for the speeds of 1 and 2 tiles.
+1. Maybe we should check, just in case, that changing the define statement of worker number does not jeopardize our program
