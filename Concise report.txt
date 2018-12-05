@@ -81,3 +81,14 @@
 256x256:    Time per round (sec.) : 0.082847
 512x512:    Time per round (sec.) : 0.328144
 1024x1024:  Time per round (sec.) : 1.309630
+
+8. LAST. Final solution (times for 100 rounds)
+
+16x16:      Time per round (sec.) : 0.000326
+32x32:      Time per round (sec.) : 0.001225
+64x64:      Time per round (sec.) : 0.004811
+128x128:    Time per round (sec.) : 0.018864
+256x256:    Time per round (sec.) : 0.074730
+512x512:    Time per round (sec.) : 0.301157
+1024x1024:  Time per round (sec.) : 1.200322
+1736x1736:  Time per round (sec.) : 3.471471
