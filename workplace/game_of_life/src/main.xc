@@ -13,8 +13,8 @@
 
 #define REALWIDTH (IMWD/8)          // Width of main matrix with bitwise packing
 
-#define INFNAME     "test16.pgm"    // Input image path
-#define OUTFNAME    "testout.pgm"   // Output image path
+#define INFNAME     "images/test16.pgm"     // Input image path
+#define OUTFNAME    "testout.pgm"           // Output image path
 
 typedef unsigned char uchar;        // Using uchar as shorthand
 
