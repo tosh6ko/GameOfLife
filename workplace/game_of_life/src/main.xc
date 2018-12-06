@@ -440,7 +440,7 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
                     numberOfAlive = 0;
                     for(int i=0;i<8;i++)
                     {
-                        nX = ((b*8)+neighbourX[i]+(8*width)+c)%(8*width);
+                        nX = ((b*8)+neighbourX[i]+c+IMWD)%IMWD;
                         nY = (a+neighbourY[i]+height)%height;
                         if((matrix[nY][nX/8] & (1 << (nX%8))) !=0) numberOfAlive++;
                     }
@@ -459,7 +459,7 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
                     numberOfAlive = 0;
                     for(int i=0;i<8;i++)
                     {
-                        nX = ((b*8)+neighbourX[i]+(8*width)+c)%(8*width);
+                        nX = ((b*8)+neighbourX[i]+c+IMWD)%IMWD;
                         nY = (a+neighbourY[i]+height)%height;
                         if((matrix[nY][nX/8] & (1 << (nX%8))) !=0) numberOfAlive++;
                     }
