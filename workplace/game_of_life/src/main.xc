@@ -412,8 +412,8 @@ void calculateNextState(uchar matrix[IMHT/WORKERS+2][REALWIDTH])
     uchar saved1[REALWIDTH];
     uchar saved2[REALWIDTH];
 
-    int height = IMHT/WORKERS+2;
-    int width  = REALWIDTH;
+    const int height = IMHT/WORKERS+2;
+    const int width  = REALWIDTH;
     const int neighbourX[8] = {-1,  0, 1, -1, 1, -1,  0, 1};
     const int neighbourY[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
     int numberOfAlive;
